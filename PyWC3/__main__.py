@@ -2,8 +2,8 @@ from argparse import ArgumentParser
 from PyWC3 import Map
 import sys
 import os
-from config import *
-import re
+import json
+
 def create_arg_parser():
     """Create and initialize an argument parser object"""
     parser = ArgumentParser(description="Python Warcraft III Mapscript Generator.")
@@ -22,25 +22,28 @@ def create_arg_parser():
                         dest="jass", action="store_true")
     return parser
 
-
 def main():
     """Entry point function to the translator"""
     # with open("setup.py")
-    print("PyWC3 version {} by Bart Limburg\n".format(_VERSION))
+    print("PyWC3 version 1.0.0 by Bart Limburg\n")
+    try:
+        with open("config.json","r") as f:
+            cfg = json.load(f)
+    except:
+        raise Exception("Configuration file config.json not found in location: {}".format(os.getcwd()))
     parser = create_arg_parser()
     argv = parser.parse_args()
-
     mapfile = argv.map
     if mapfile:
-        m = Map(mapfile,show_ast=argv.debug or SHOW_AST)
+        m = Map(mapfile,show_ast=argv.debug or cfg['SHOW_AST'])
 
-        m.generate_objects_file()
+        m.generate_definitions_file()
 
         if(not (argv.build or argv.run or argv.edit)):
             print("Incorrect usage: please pass --build, --run or --edit as follows: python PyWC3 map.w3x --build --run")
         if argv.build:
             print("Building map {}".format(mapfile))
-            m.build_map()
+            m.build()
 
         if argv.run:
             print("Running Warcraft III")

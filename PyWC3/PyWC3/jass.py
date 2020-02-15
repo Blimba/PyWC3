@@ -1,9 +1,16 @@
+import json
+import os
 import re
-from config import *
+
+try:
+    with open("config.json", "r") as f:
+        cfg = json.load(f)
+except:
+    raise Exception("Configuration file config.json not found in location: {}".format(os.getcwd()))
 class Jass:
     @staticmethod
     def convertCommonJ():
-        inf = os.path.join(JASS_FOLDER,'common.j')
+        inf = os.path.join(cfg['JASS_FOLDER'],'common.j')
         print("Converting {}...".format(inf))
         with open(inf, "r") as f:
             lns = "".join(f.readlines())
@@ -11,7 +18,7 @@ class Jass:
         funcs = re.findall("^\s*(constant)?\s*native\s+([^\s]+)\s+takes\s+(.+)\s+returns\s+(.+)$",lns,flags=re.MULTILINE)
         consts = re.findall("^\s*(constant)?\s*([^\s]+)\s+([^\s]+)\s+=\s+(.+?)(\/\/.*?)?$",lns,flags=re.MULTILINE)
 
-        outf = os.path.join(PYTHON_SOURCE_FOLDER,'obj','commonj.py')
+        outf = os.path.join(cfg['PYTHON_SOURCE_FOLDER'],cfg['DEF_SUBFOLDER'],'commonj.py')
         with open(outf, "w") as f:
             f.write("# -- DO NOT INCLUDE --\n")
 
@@ -29,11 +36,11 @@ class Jass:
 
     @staticmethod
     def convertBlizzardJ():
-        inf = os.path.join(JASS_FOLDER,'blizzard.j')
+        inf = os.path.join(cfg['JASS_FOLDER'],'blizzard.j')
         print("Converting {}...".format(inf))
         with open(inf, "r") as f:
             lns = "".join(f.readlines())
-        outf = os.path.join(PYTHON_SOURCE_FOLDER,'obj','blizzardj.py')
+        outf = os.path.join(cfg['PYTHON_SOURCE_FOLDER'],cfg['DEF_SUBFOLDER'],'blizzardj.py')
         with open(outf, "w") as f:
             f.write("# -- DO NOT INCLUDE --\nfrom .commonj import *\n")
             nofuncs = re.sub("^\s*function([\S\s]+)endfunction.*$","",lns,flags = re.MULTILINE)
@@ -52,11 +59,11 @@ class Jass:
 
     @staticmethod
     def convertCommonAI():
-        inf = os.path.join(JASS_FOLDER,'common.ai')
+        inf = os.path.join(cfg['JASS_FOLDER'],'common.ai')
         print("Converting {}...".format(inf))
         with open(inf, "r") as f:
             lns = "".join(f.readlines())
-        outf = os.path.join(PYTHON_SOURCE_FOLDER,'obj','commonai.py')
+        outf = os.path.join(cfg['PYTHON_SOURCE_FOLDER'],cfg['DEF_SUBFOLDER'],'commonai.py')
         with open(outf, "w") as f:
             f.write("# -- DO NOT INCLUDE --\nfrom .commonj import *\n")
             nofuncs = re.sub("^\s*function([\S\s]+)endfunction.*$","",lns,flags = re.MULTILINE)

@@ -1,12 +1,7 @@
 -- Generated map code
 gg_trg_Melee_Initialization = nil
-gg_rct_Region_000 = nil
+gg_trg_Untitled_Trigger_001 = nil
 function InitGlobals()
-end
-
-function CreateRegions()
-    local we
-    gg_rct_Region_000 = Rect(-672.0, 64.0, -352.0, 256.0)
 end
 
 function Trig_Melee_Initialization_Actions()
@@ -19,8 +14,19 @@ function InitTrig_Melee_Initialization()
     TriggerAddAction(gg_trg_Melee_Initialization, Trig_Melee_Initialization_Actions)
 end
 
+function Trig_Untitled_Trigger_001_Actions()
+    PanCameraToTimedLocForPlayer(Player(0), GetRectCenter(GetPlayableMapRect()), 0)
+end
+
+function InitTrig_Untitled_Trigger_001()
+    gg_trg_Untitled_Trigger_001 = CreateTrigger()
+    TriggerRegisterTimerEventPeriodic(gg_trg_Untitled_Trigger_001, 0.10)
+    TriggerAddAction(gg_trg_Untitled_Trigger_001, Trig_Untitled_Trigger_001_Actions)
+end
+
 function InitCustomTriggers()
     InitTrig_Melee_Initialization()
+    InitTrig_Untitled_Trigger_001()
 end
 
 function RunInitializationTriggers()
@@ -40,13 +46,12 @@ function InitCustomTeams()
 end
 
 function main()
-    SetCameraBounds(-15616.0 + GetCameraMargin(CAMERA_MARGIN_LEFT), -15872.0 + GetCameraMargin(CAMERA_MARGIN_BOTTOM), 15616.0 - GetCameraMargin(CAMERA_MARGIN_RIGHT), 15360.0 - GetCameraMargin(CAMERA_MARGIN_TOP), -15616.0 + GetCameraMargin(CAMERA_MARGIN_LEFT), 15360.0 - GetCameraMargin(CAMERA_MARGIN_TOP), 15616.0 - GetCameraMargin(CAMERA_MARGIN_RIGHT), -15872.0 + GetCameraMargin(CAMERA_MARGIN_BOTTOM))
-    SetDayNightModels("Environment\\DNC\\DNCDalaran\\DNCDalaranTerrain\\DNCDalaranTerrain.mdl", "Environment\\DNC\\DNCDalaran\\DNCDalaranUnit\\DNCDalaranUnit.mdl")
+    SetCameraBounds(-3328.0 + GetCameraMargin(CAMERA_MARGIN_LEFT), -3584.0 + GetCameraMargin(CAMERA_MARGIN_BOTTOM), 3328.0 - GetCameraMargin(CAMERA_MARGIN_RIGHT), 3072.0 - GetCameraMargin(CAMERA_MARGIN_TOP), -3328.0 + GetCameraMargin(CAMERA_MARGIN_LEFT), 3072.0 - GetCameraMargin(CAMERA_MARGIN_TOP), 3328.0 - GetCameraMargin(CAMERA_MARGIN_RIGHT), -3584.0 + GetCameraMargin(CAMERA_MARGIN_BOTTOM))
+    SetDayNightModels("Environment\\DNC\\DNCLordaeron\\DNCLordaeronTerrain\\DNCLordaeronTerrain.mdl", "Environment\\DNC\\DNCLordaeron\\DNCLordaeronUnit\\DNCLordaeronUnit.mdl")
     NewSoundEnvironment("Default")
-    SetAmbientDaySound("DalaranRuinsDay")
-    SetAmbientNightSound("DalaranRuinsNight")
+    SetAmbientDaySound("LordaeronSummerDay")
+    SetAmbientNightSound("LordaeronSummerNight")
     SetMapMusic("Music", true, 0)
-    CreateRegions()
     InitBlizzard()
     InitGlobals()
     InitCustomTriggers()
@@ -54,12 +59,12 @@ function main()
 end
 
 function config()
-    SetMapName("TRIGSTR_003")
-    SetMapDescription("TRIGSTR_005")
+    SetMapName("TRIGSTR_001")
+    SetMapDescription("TRIGSTR_003")
     SetPlayers(1)
     SetTeams(1)
     SetGamePlacement(MAP_PLACEMENT_USE_MAP_SETTINGS)
-    DefineStartLocation(0, 0.0, 0.0)
+    DefineStartLocation(0, -64.0, -128.0)
     InitCustomPlayerSlots()
     SetPlayerSlotAvailable(Player(0), MAP_CONTROL_USER)
     InitGenericPlayerSlots()
@@ -639,20 +644,7 @@ local Handle = class(function(Handle)
     return Handle
 end, {}, {__type = "__type__"}, {})
 -- Main map code
-local A = class(function(A)
-    function A.__gc__(self)
-        print(self)
-        print("garbage collected")
-    end
-    return A
-end, {}, {__gc = "__gc__"}, {})
 local function test()
-    local a = A()
-    local b = A()
-    print(_VERSION)
-    print(a, b)
-    a = nil
-    b = nil
-    collectgarbage()
+    print("hello world")
 end
-AddScriptHook(test, MAIN_AFTER)
+AddScriptHook(test, MAIN_BEFORE)
