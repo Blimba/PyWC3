@@ -20,10 +20,11 @@ would, go to `Scenario > Map Options` and set `Scripting Language` to Lua. Save 
 ### config.json  
 
 The config.json file contains file references used by the project. It has the general structure:  
-```
+```json
 {
     "WAR3_EXE": "C:\\Games\\Warcraft III\\x86_64\\Warcraft III.exe",
     "WE_EXE": "C:\\Games\\Warcraft III\\x86_64\\World Editor.exe",
+    "WINDOWMODE": "fullscreen", // fullscreen or windowed
 
     "MAP_FOLDER": "maps",
     "DIST_FOLDER": "dist",
@@ -35,11 +36,11 @@ The config.json file contains file references used by the project. It has the ge
     "SHOW_AST": false,
 }
 ``` 
-where `WAR3_EXE` and `WE_EXE` point to the warcraft executables. `MAP_FOLDER` is the folder where the
-original map can be found, which should be saved as a folder format. `DIST_FOLDER` is where the built map files can
-be found after PyWC3 has been executed. `JASS_FOLDER` contains the Blizzard Jass code definitions, which help us
-with code completion. Every new version of Warcraft III requires us to [translate these](#jass-translate) to make sure 
-our definitions are up to date.
+where `WAR3_EXE` and `WE_EXE` point to the warcraft executables. `WINDOWMODE` can be fullscreen or windowed to use as
+launch mode for Warcraft III. `MAP_FOLDER` is the folder where the original map can be found, which should be saved as 
+a folder format. `DIST_FOLDER` is where the built map files can be found after PyWC3 has been executed. `JASS_FOLDER` 
+contains the Blizzard Jass code definitions, which help us with code completion. Every new version of Warcraft III 
+requires us to [translate these](#jass-translate) to make sure our definitions are up to date.
 
 `PYTHON_SOURCE_FOLDER` contains all of the maps code, as well as standard libraries which can be included into the 
 map script. The entrypoint for the python code is {mapfile}.py, where {mapfile} is the name of the map file. This script

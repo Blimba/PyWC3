@@ -21,7 +21,7 @@ class Map:
         f = os.path.join(os.getcwd(),"{}\\{}".format(self.cfg['DIST_FOLDER'], self.file))
         if os.path.exists(f):
             print("Launching map {}".format(f))
-            process = subprocess.Popen([self.cfg['WAR3_EXE'], '-launch', '-nativefullscr', '-loadfile', '{}'.format(f)],
+            process = subprocess.Popen([self.cfg['WAR3_EXE'], '-launch', '-loadfile', '{}'.format(f), '-windowmode',self.cfg['WINDOWMODE']],
                                        stdout=subprocess.PIPE,
                                        stderr=subprocess.PIPE)
             stdout, stderr = process.communicate()
