@@ -24,7 +24,7 @@ The config.json file contains file references used by the project. It has the ge
 {
     "WAR3_EXE": "C:\\Games\\Warcraft III\\x86_64\\Warcraft III.exe",
     "WE_EXE": "C:\\Games\\Warcraft III\\x86_64\\World Editor.exe",
-    "WINDOWMODE": "fullscreen", // fullscreen or windowed
+    "WINDOWMODE": "fullscreen",
 
     "MAP_FOLDER": "maps",
     "DIST_FOLDER": "dist",
