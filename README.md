@@ -108,6 +108,10 @@ Jass.convert_all()
 # Coding Features
 - Hooking user functions to the mapscript by using `AddScriptHook(func, where)` where `where` can be CONFIG_BEFORE, 
 CONFIG_AFTER, MAIN_BEFORE or MAIN_AFTER. BEFORE or AFTER means before or after the blizzard generated code runs.
+The following import is required for the hook:
+```python
+from std.index import *
+```
 - Replacing the blizzard generated code can be done as follows: 
 ```python
 def replaced():
