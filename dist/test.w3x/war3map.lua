@@ -623,28 +623,103 @@ local Handle = class(function(Handle)
     Handle.handles = dict {}
     function Handle.__init__(self, constructorfunc, ...)
         local args = list {...}
-        print("init for ", self)
         self._handle = constructorfunc(unpack(args))
         self.track()
     end
     function Handle.track(self)
-        print("Tracking", self._handle)
         Handle.handles[self._handle] = self
     end
     function Handle.get(handle)
         return Handle.handles[handle]
     end
     function Handle.lose(self)
-        print("Losing", self._handle)
         Handle.handles[self._handle] = nil
     end
     function Handle.__type__(self)
-        return "Handle"
+        return "PyHandle"
+    end
+    return Handle
+end, {}, {__type = "__type__"}, {})
+-- Imported module pysrc\std\timer.py
+local Timer = class(function(Timer)
+    function Timer.__init__(self, periodic)
+        periodic = periodic or false
+        self.periodic = periodic
+        Handle.__init__(self, CreateTimer)
+    end
+    function Timer.__gc__(self)
+        self.destroy()
+    end
+    function Timer.__type__(self)
+        return "PyTimer"
+    end
+    function Timer.start(self, time, callback)
+        self.time = time
+        self.callback = callback
+        self.track()
+        TimerStart(self._handle, time, self.periodic, callback)
+    end
+    function Timer.restart(self)
+        if self.callback then
+            self.track()
+            TimerStart(self._handle, self.time, self.periodic, self.callback)
+        end
+    end
+    Timer.getExpired = staticmethod(function()
+        local t = Handle.handles[GetExpiredTimer()]
+        return t
+    end)
+    function Timer.pause(self)
+        PauseTimer(self._handle)
+        return self
+    end
+    function Timer.resume(self)
+        ResumeTimer(self._handle)
+        return self
+    end
+    function Timer.destroy(self)
+        self.lose()
+        DestroyTimer(self._handle)
+    end
+    function Timer.getElapsed(self)
+        return TimerGetElapsed(self._handle)
+    end
+    function Timer.getRemaining(self)
+        return TimerGetRemaining(self._handle)
+    end
+    return Timer
+end, {Handle}, {__gc = "__gc__", __type = "__type__"}, {})
+-- Imported module pysrc\std\handle.py
+local Handle = class(function(Handle)
+    Handle.handles = dict {}
+    function Handle.__init__(self, constructorfunc, ...)
+        local args = list {...}
+        self._handle = constructorfunc(unpack(args))
+        self.track()
+    end
+    function Handle.track(self)
+        Handle.handles[self._handle] = self
+    end
+    function Handle.get(handle)
+        return Handle.handles[handle]
+    end
+    function Handle.lose(self)
+        Handle.handles[self._handle] = nil
+    end
+    function Handle.__type__(self)
+        return "PyHandle"
     end
     return Handle
 end, {}, {__type = "__type__"}, {})
 -- Main map code
-local function test()
-    print("hello world")
+local function timeout()
+    local t = Timer.getExpired()
+    print(t.data, type(t))
+    t.destroy()
 end
-AddScriptHook(test, MAIN_BEFORE)
+local function test()
+    local t = Timer()
+    t.data = 5
+    t.start(1.0, timeout)
+end
+AddScriptHook(test, MAIN_AFTER)

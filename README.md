@@ -30,7 +30,7 @@ The config.json file contains file references used by the project. It has the ge
     "JASS_FOLDER": "jass",
 
     "PYTHON_SOURCE_FOLDER": "pysrc",
-    "DEF_SUBFOLDER": "def",
+    "DEF_SUBFOLDER": "df",
 
     "SHOW_AST": false,
 }
@@ -78,7 +78,7 @@ No matter what argv are added, the script will always read the original war3map.
 generated objects, which can then be used in the python scripts. The python script including the definitions can be 
 imported by:
 ```python
-from def.mapname import *  #mapname needs to be replaced by the actual map filename.
+from df.mapname import *  #mapname needs to be replaced by the actual map filename.
 ```
 ### As a module in IPython
 To start IPython, run the IPython.bat script, which automatically imports PyWC3. Then, use the `Map()` module:
@@ -103,4 +103,33 @@ python PyWC3 --update-jass
 without supplying a map filename to the script. Alternatively, in IPython, run:
 ```python
 Jass.convert_all()
+```
+
+# Coding Features
+- Hooking user functions to the mapscript by using `AddScriptHook(func, where)` where `where` can be CONFIG_BEFORE, 
+CONFIG_AFTER, MAIN_BEFORE or MAIN_AFTER. BEFORE or AFTER means before or after the blizzard generated code runs.
+- Replacing the blizzard generated code can be done as follows: 
+```python
+def replaced():
+    #user code goes here
+    pass
+
+main = replaced
+# or
+config = replaced
+```
+- A Timer module, which is very simple to use:
+```python
+from std.index import *
+from std.timer import Timer
+def timeout():
+    t = Timer.getExpired()
+    print(t.data)
+    t.destroy()
+
+def test():
+    t = Timer()
+    t.data = 5
+    t.start(1.0,timeout)
+AddScriptHook(test,MAIN_AFTER)
 ```

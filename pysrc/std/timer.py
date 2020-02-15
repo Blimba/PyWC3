@@ -1,14 +1,16 @@
 from handle import *
-from ..obj.commonj import *
+from ..df.commonj import *
+
 class Timer(Handle):
     def __init__(self,periodic=False):
         self.periodic = periodic
         Handle.__init__(self,CreateTimer)
 
     def __gc__(self):
-        print("hallo")
-        print(self)
+        # currently this never runs
         self.destroy()
+    def __type__(self):
+        return "PyTimer"
 
     def start(self,time,callback):
         self.time = time
@@ -24,7 +26,6 @@ class Timer(Handle):
     @staticmethod
     def getExpired():
         t = Handle.handles[GetExpiredTimer()]
-        t.lose()
         return t
 
     def pause(self):

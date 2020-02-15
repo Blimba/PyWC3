@@ -55,27 +55,29 @@ class Map:
         try:
             with open(file, "r") as f:
                 lst = []
-
                 content = "".join(f.readlines())
                 srcdir = os.path.dirname(file)
                 # exclude files containing python only code
-                if re.match("^# --DO NOT INCLUDE--$", content, re.MULTILINE):
+                if re.match("^#.*DO NOT INCLUDE.*$", content, flags=re.MULTILINE):
                     return []
                 if not exclude:
                     lst.append(file)
+
                 matches = re.findall("^import (.+)", content, re.MULTILINE)
                 for match in matches:
-                    newfile = match.replace('.', '\\').strip('\\')
-                    for d in self.get_dependencies("{}.py".format(os.path.join(srcdir, newfile)), exclude=False):
-                        # print("d",d)
+                    newfile = re.sub('(?<!\.)\.(?!\.)', '\\\\', match).strip('\\')
+                    newfile = re.sub('\.\.', '..\\\\', newfile)
+                    path = os.path.normpath(os.path.join(srcdir, newfile))
+                    for d in self.get_dependencies("{}.py".format(path), exclude=False):
                         lst.append(d)
                 matches = re.findall("^from (.+) import", content, re.MULTILINE)
                 for match in matches:
-                    newfile = match.replace('.', '\\').strip('\\')
-                    for d in self.get_dependencies("{}.py".format(os.path.join(srcdir, newfile)), exclude=False):
-                        # print("d",d)
+                    newfile = re.sub('(?<!\.)\.(?!\.)', '\\\\', match).strip('\\')
+                    newfile = re.sub('\.\.', '..\\\\', newfile)
+                    path = os.path.normpath(os.path.join(srcdir, newfile))
+                    for d in self.get_dependencies("{}.py".format(path), exclude=False):
                         lst.append(d)
-        except:
+        except FileNotFoundError:
             raise Exception("Cannot find python source file {}".format(file))
         return lst
 
