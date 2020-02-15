@@ -4,14 +4,15 @@
 - [pythonlua](http://www.github.com/Blimba/python-lua/) version 1.0.0 or higher 
 ## Setting up
 It is highly recommended to install python using a distribution such as 
-[Anaconda](https://www.anaconda.com/distribution/), which comes preinstalled with packages required by this project. 
+[Anaconda](https://www.anaconda.com/distribution/), which comes preinstalled with packages required by this project
+(except pythonlua, which you will need to install manually). 
 In addition, you will be able to use IPython, which is one way of quickly building and testing custom Warcraft III maps 
 created with this project. Please make sure that the python program is accessible in the `PATH` variable 
 ([how?](https://geek-university.com/python/add-python-to-the-windows-path/)).
 
 In addition, [pythonlua](http://www.github.com/Blimba/python-lua/) is required for translating python code to lua, 
 the scripting language used by Warcraft III. Install the pythonlua project using the instructions in the project, 
- or simply copy the folder `pythonlua`from the project to the folder `PyWC3`.
+ or simply copy the folder `pythonlua`from it to the folder `PyWC3`.
 
 To start a new map project, open the World Editor (with a new map, or a map with only GUI triggers) like you normally 
 would, go to `Scenario > Map Options` and set `Scripting Language` to Lua. Save your map, making sure to select 
