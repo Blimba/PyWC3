@@ -90,7 +90,7 @@ class Jass:
         print("Saved to {}.".format(outf))
 
     @staticmethod
-    def convertAll():
+    def convert_all():
         Jass.convertCommonJ()
         Jass.convertCommonAI()
         Jass.convertBlizzardJ()

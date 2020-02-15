@@ -3,7 +3,7 @@ import os
 import subprocess
 import re
 from pythonlua.translator import Translator
-
+import shutil
 import json
 
 class Map:
@@ -52,28 +52,31 @@ class Map:
 
     def get_dependencies(self, file, exclude=True):
         print("> Reading file {}...".format(file))
-        with open(file, "r") as f:
-            lst = []
+        try:
+            with open(file, "r") as f:
+                lst = []
 
-            content = "".join(f.readlines())
-            srcdir = os.path.dirname(file)
-            # exclude files containing python only code
-            if re.match("^# --DO NOT INCLUDE--$", content, re.MULTILINE):
-                return []
-            if not exclude:
-                lst.append(file)
-            matches = re.findall("^import (.+)", content, re.MULTILINE)
-            for match in matches:
-                newfile = match.replace('.', '\\').strip('\\')
-                for d in self.get_dependencies("{}.py".format(os.path.join(srcdir, newfile)), exclude=False):
-                    # print("d",d)
-                    lst.append(d)
-            matches = re.findall("^from (.+) import", content, re.MULTILINE)
-            for match in matches:
-                newfile = match.replace('.', '\\').strip('\\')
-                for d in self.get_dependencies("{}.py".format(os.path.join(srcdir, newfile)), exclude=False):
-                    # print("d",d)
-                    lst.append(d)
+                content = "".join(f.readlines())
+                srcdir = os.path.dirname(file)
+                # exclude files containing python only code
+                if re.match("^# --DO NOT INCLUDE--$", content, re.MULTILINE):
+                    return []
+                if not exclude:
+                    lst.append(file)
+                matches = re.findall("^import (.+)", content, re.MULTILINE)
+                for match in matches:
+                    newfile = match.replace('.', '\\').strip('\\')
+                    for d in self.get_dependencies("{}.py".format(os.path.join(srcdir, newfile)), exclude=False):
+                        # print("d",d)
+                        lst.append(d)
+                matches = re.findall("^from (.+) import", content, re.MULTILINE)
+                for match in matches:
+                    newfile = match.replace('.', '\\').strip('\\')
+                    for d in self.get_dependencies("{}.py".format(os.path.join(srcdir, newfile)), exclude=False):
+                        # print("d",d)
+                        lst.append(d)
+        except:
+            raise Exception("Cannot find python source file {}".format(file))
         return lst
 
     def build(self):
@@ -82,6 +85,13 @@ class Map:
         spl = filename.split(".")
         if spl[-1] == 'w3m' or spl[-1] == 'w3x':
             filename = ".".join(spl[:-1])
+
+        print("> Generating distribution map files in {}...".format(os.path.join(self.cfg['DIST_FOLDER'], self.file)))
+        # delete previous distribution
+        try: shutil.rmtree(os.path.join(self.cfg['DIST_FOLDER'], self.file))
+        except: pass  # the dist map does not exist yet, no problem!
+        # copy the map
+        shutil.copytree(os.path.join(self.cfg['MAP_FOLDER'], self.file),os.path.join(self.cfg['DIST_FOLDER'], self.file))
         # write translated lua files
         with open(os.path.join(self.cfg['DIST_FOLDER'], self.file, "war3map.lua"), "w") as f:
             # write map code
@@ -104,6 +114,26 @@ class Map:
             print("> Appended file {}.".format(os.path.join(self.cfg['PYTHON_SOURCE_FOLDER'], "{}.py".format(filename))))
         print("Build completed.")
         # WRITE A CODE CHECKER WITH LUA EXECUTION HERE
+
+    def generate_python_source(self):
+        filename = self.file
+        spl = filename.split(".")
+        if spl[-1] == 'w3m' or spl[-1] == 'w3x':
+            filename = ".".join(spl[:-1])
+        fn = os.path.join(self.cfg['PYTHON_SOURCE_FOLDER'],"{}.py".format(filename))
+        if os.path.exists(fn):
+            raise Exception("Python source file {} already exists!".format(fn))
+        with open(fn,"w") as f:
+            print("Generating python script {}...".format(fn))
+            f.write("""from std.index import *
+            
+            
+def {}():
+    print("hello world")
+    
+    
+AddScriptHook({}, MAIN_AFTER)
+""".format(filename,filename))
 
     def generate_definitions_file(self):
         gbls = {}
