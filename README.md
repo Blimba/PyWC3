@@ -55,14 +55,14 @@ def test():
     
 AddScriptHook(test, MAIN_AFTER)
 ```
-The script file can be generated automatically by using a command (see [useage](#useage)).
+The script file can be generated automatically by using a command (see [Usage](#Usage)).
 
 The `DEF_SUBFOLDER` is a folder within `PYTHON_SOURCE_FOLDER` where the definitions of blizzard functions are located.
 The scripts are not included in the build, and are used only for code completion. `SHOW_AST` is used by the pythonlua
 translator to print the abstract syntax tree. Can be used for debugging purposes if the lua code does not execute like
 the python code would.
 
-## Useage
+## Usage
 ### As a python application
 Run a console / terminal (such as cmd.exe) and make sure the current working directory is in the main folder. Run PyWC3
 using the following command: `python PyWC3 mapname.w3x --argv` where `mapname.w3x` is the folder name, and `--argv` is as follows:
