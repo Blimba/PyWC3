@@ -16,7 +16,9 @@ the scripting language used by Warcraft III. Install the pythonlua project using
 
 To start a new map project, open the World Editor (with a new map, or a map with only GUI triggers) like you normally 
 would, go to `Scenario > Map Options` and set `Scripting Language` to Lua. Save your map, making sure to select 
-`Warcraft III Scenario Folder (- Expansion)` as the format. Save this map to the `maps/` folder. 
+`Warcraft III Scenario Folder (- Expansion)` as the format. Save this map to the `maps/` folder. Alternatively,
+you can use the `Warcraft III Scenario (- Expansion)` (MPQ) format as long as you have the 
+[MPQEDitor.exe](http://www.zezula.net/en/mpq/download.html) in the `mpqeditor` folder.
 ### config.json  
 
 The config.json file contains file references used by the project. It has the general structure:  
@@ -24,7 +26,10 @@ The config.json file contains file references used by the project. It has the ge
 {
     "WAR3_EXE": "C:\\Games\\Warcraft III\\x86_64\\Warcraft III.exe",
     "WE_EXE": "C:\\Games\\Warcraft III\\x86_64\\World Editor.exe",
-    "WINDOWMODE": "fullscreen",
+    "WINDOWMODE": "windowed",
+
+    "MPQ_EXE": "mpqeditor\\mpqeditor.exe",
+    "SAVE_AS_MPQ": true,
 
     "MAP_FOLDER": "maps",
     "DIST_FOLDER": "dist",
@@ -33,7 +38,7 @@ The config.json file contains file references used by the project. It has the ge
     "PYTHON_SOURCE_FOLDER": "pysrc",
     "DEF_SUBFOLDER": "df",
 
-    "SHOW_AST": false,
+    "SHOW_AST": false
 }
 ``` 
 where `WAR3_EXE` and `WE_EXE` point to the warcraft executables. `WINDOWMODE` can be fullscreen or windowed to use as
@@ -41,6 +46,10 @@ launch mode for Warcraft III. `MAP_FOLDER` is the folder where the original map 
 a folder format. `DIST_FOLDER` is where the built map files can be found after PyWC3 has been executed. `JASS_FOLDER` 
 contains the Blizzard Jass code definitions, which help us with code completion. Every new version of Warcraft III 
 requires us to [translate these](#jass-translate) to make sure our definitions are up to date.
+
+`MPQ_EXE` points to the location of the [MPQEDitor.exe](http://www.zezula.net/en/mpq/download.html) which we can use
+to load/save the map in mpq format. Loading folder/mpq is automatic based on the type we supply, and the way the map is
+saved depends on the `SAVE_AS_MPQ` flag.
 
 `PYTHON_SOURCE_FOLDER` contains all of the maps code, as well as standard libraries which can be included into the 
 map script. The entrypoint for the python code is {mapfile}.py, where {mapfile} is the name of the map file. This script

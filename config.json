@@ -1,7 +1,10 @@
 {
     "WAR3_EXE": "E:\\Games\\Warcraft III\\x86_64\\Warcraft III.exe",
     "WE_EXE": "E:\\Games\\Warcraft III\\x86_64\\World Editor.exe",
-    "WINDOWMODE": "fullscreen",
+    "WINDOWMODE": "windowed",
+
+    "MPQ_EXE": "mpqeditor\\mpqeditor.exe",
+    "SAVE_AS_MPQ": true,
 
     "MAP_FOLDER": "maps",
     "DIST_FOLDER": "dist",
