@@ -173,7 +173,8 @@ class Map:
                                         stderr=subprocess.PIPE))
                 for root,dir,files in os.walk(fn):
                     for file in files:
-                        self._print_sp(subprocess.Popen([self.cfg['MPQ_EXE'], 'a', nfn, os.path.join(fn,file), file],
+                        nroot = root.replace(fn, '').lstrip('\\')
+                        self._print_sp(subprocess.Popen([self.cfg['MPQ_EXE'], 'a', nfn, os.path.join(root,file), os.path.join(nroot,file)],
                                                         stdout=subprocess.PIPE,
                                                         stderr=subprocess.PIPE))
             # add the new script to the mpq
