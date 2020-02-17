@@ -92,17 +92,20 @@ class Map:
                     newfile = re.sub('\.\.', '..\\\\', newfile)
                     path = os.path.normpath(os.path.join(srcdir, newfile))
                     for d in self.get_dependencies("{}.py".format(path), exclude=False):
-                        lst.append(d)
+                        if d not in lst:
+                            lst.append(d)
                 matches = re.findall("^from (.+) import", content, re.MULTILINE)
                 for match in matches:
                     newfile = re.sub('(?<!\.)\.(?!\.)', '\\\\', match).strip('\\')
                     newfile = re.sub('\.\.', '..\\\\', newfile)
                     path = os.path.normpath(os.path.join(srcdir, newfile))
                     for d in self.get_dependencies("{}.py".format(path), exclude=False):
-                        lst.append(d)
+                        if d not in lst:
+                            lst.append(d)
         except FileNotFoundError:
-            raise Exception("Cannot find python source file {}".format(file))
-        return lst
+            print("WARNING: cannot find python source file {}".format(file))
+        try: return lst
+        except: return []
 
     def get_war3maplua(self):
         if self._is_mpq:

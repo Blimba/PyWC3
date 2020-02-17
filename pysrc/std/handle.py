@@ -1,12 +1,14 @@
 class Handle:
     handles = {}
-    def __init__(self,constructorfunc, *args):
+
+    def __init__(self, constructorfunc, *args):
         self._handle = constructorfunc(*args)
         self.track()
 
     def track(self):
         Handle.handles[self._handle] = self
 
+    @staticmethod
     def get(handle):
         return Handle.handles[handle]
 
@@ -15,3 +17,7 @@ class Handle:
 
     def __type__(self):
         return "PyHandle"
+
+    @property
+    def handle(self):
+        return self._handle

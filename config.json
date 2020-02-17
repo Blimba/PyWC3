@@ -4,7 +4,7 @@
     "WINDOWMODE": "windowed",
 
     "MPQ_EXE": "mpqeditor\\mpqeditor.exe",
-    "SAVE_AS_MPQ": true,
+    "SAVE_AS_MPQ": false,
 
     "MAP_FOLDER": "maps",
     "DIST_FOLDER": "dist",

@@ -1,12 +1,18 @@
 from std.index import *
 from std.timer import Timer
-def timeout():
-    t = Timer.getExpired()
-    print(t.data,type(t))
-    t.destroy()
+from std.effect import Effect
+from df.test import *
+
+fx = None
+def rotate():
+    fx.lookAt(GetUnitX(gg_unit_hpea_0000),GetUnitY(gg_unit_hpea_0000),BlzGetUnitZ(gg_unit_hpea_0000))
+    Timer.getExpired().restart()
 def test():
+    # print('a')
+    fx = Effect(0,0,128,r"Abilities\\Weapons\\CannonTowerMissile\\CannonTowerMissile.mdl")
+
     t = Timer()
-    t.data = 5
-    t.start(1.0,timeout)
+    t.start(0.01,rotate)
+
 
 AddScriptHook(test,MAIN_AFTER)

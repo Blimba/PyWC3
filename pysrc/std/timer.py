@@ -15,12 +15,10 @@ class Timer(Handle):
     def start(self,time,callback):
         self.time = time
         self.callback = callback
-        self.track()
         TimerStart(self._handle,time,self.periodic,callback)
 
     def restart(self):
         if self.callback:
-            self.track()
             TimerStart(self._handle,self.time,self.periodic,self.callback)
 
     @staticmethod

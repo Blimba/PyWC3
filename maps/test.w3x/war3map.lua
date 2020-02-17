@@ -1,11 +1,33 @@
 gg_trg_Melee_Initialization = nil
-gg_trg_Untitled_Trigger_001 = nil
+gg_unit_hpea_0000 = nil
 function InitGlobals()
+end
+
+function CreateUnitsForPlayer0()
+    local p = Player(0)
+    local u
+    local unitID
+    local t
+    local life
+    gg_unit_hpea_0000 = BlzCreateUnitWithSkin(p, FourCC("hpea"), -257.9, -273.7, 259.571, FourCC("hpea"))
+end
+
+function CreatePlayerBuildings()
+end
+
+function CreatePlayerUnits()
+    CreateUnitsForPlayer0()
+end
+
+function CreateAllUnits()
+    CreatePlayerBuildings()
+    CreatePlayerUnits()
 end
 
 function Trig_Melee_Initialization_Actions()
     FogEnableOff()
     FogMaskEnableOff()
+    SetUnitPositionLoc(gg_unit_hpea_0000, GetRectCenter(GetPlayableMapRect()))
 end
 
 function InitTrig_Melee_Initialization()
@@ -13,19 +35,8 @@ function InitTrig_Melee_Initialization()
     TriggerAddAction(gg_trg_Melee_Initialization, Trig_Melee_Initialization_Actions)
 end
 
-function Trig_Untitled_Trigger_001_Actions()
-    PanCameraToTimedLocForPlayer(Player(0), GetRectCenter(GetPlayableMapRect()), 0)
-end
-
-function InitTrig_Untitled_Trigger_001()
-    gg_trg_Untitled_Trigger_001 = CreateTrigger()
-    TriggerRegisterTimerEventPeriodic(gg_trg_Untitled_Trigger_001, 0.10)
-    TriggerAddAction(gg_trg_Untitled_Trigger_001, Trig_Untitled_Trigger_001_Actions)
-end
-
 function InitCustomTriggers()
     InitTrig_Melee_Initialization()
-    InitTrig_Untitled_Trigger_001()
 end
 
 function RunInitializationTriggers()
@@ -51,6 +62,7 @@ function main()
     SetAmbientDaySound("LordaeronSummerDay")
     SetAmbientNightSound("LordaeronSummerNight")
     SetMapMusic("Music", true, 0)
+    CreateAllUnits()
     InitBlizzard()
     InitGlobals()
     InitCustomTriggers()
