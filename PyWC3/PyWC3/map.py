@@ -11,6 +11,7 @@ class Map:
     def __init__(self, file, **kwargs):
         with open("config.json","r") as f:
             self.cfg = json.load(f)
+        self._save_mpq = kwargs.get('save_mpq',self.cfg['SAVE_AS_MPQ'])
         if os.path.exists(os.path.join(self.cfg['MAP_FOLDER'], file)):
             self.file = file
             if(os.path.isdir(os.path.join(self.cfg['MAP_FOLDER'], file))):
@@ -193,7 +194,7 @@ class Map:
 
         print("> Generating distribution map files...")
         fn = os.path.join(self.cfg['MAP_FOLDER'], self.file)
-        if self.cfg['SAVE_AS_MPQ']:
+        if self._save_mpq:
             self.build_script(
                 self.get_war3maplua(),
                 'war3map.lua'

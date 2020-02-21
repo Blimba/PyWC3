@@ -1,2 +1,1 @@
-numpy
-pythonlua>=0.0
+pythonlua>=1.1

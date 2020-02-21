@@ -22,6 +22,8 @@ def create_arg_parser():
                         dest="jass", action="store_true")
     parser.add_argument("--init-python", help="Generate the python source file.",
                         dest="initpy", action="store_true")
+    parser.add_argument("--mpq", help="Save map as mpq.",
+                        dest="mpq", action="store_true")
     return parser
 
 def main():
@@ -37,7 +39,7 @@ def main():
     argv = parser.parse_args()
     mapfile = argv.map
     if mapfile:
-        m = Map(mapfile,show_ast=argv.debug or cfg['SHOW_AST'])
+        m = Map(mapfile,show_ast=argv.debug or cfg['SHOW_AST'],save_mpq=argv.mpq or cfg['SAVE_AS_MPQ'])
 
         m.generate_definitions_file()
 
