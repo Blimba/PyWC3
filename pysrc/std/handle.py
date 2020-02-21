@@ -15,9 +15,6 @@ class Handle:
     def lose(self):
         del Handle.handles[self._handle]
 
-    def __type__(self):
-        return "PyHandle"
-
     @property
     def handle(self):
         return self._handle

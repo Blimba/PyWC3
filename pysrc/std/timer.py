@@ -9,8 +9,6 @@ class Timer(Handle):
     def __gc__(self):
         # currently this never runs
         self.destroy()
-    def __type__(self):
-        return "PyTimer"
 
     def start(self,time,callback):
         self.time = time
@@ -22,7 +20,7 @@ class Timer(Handle):
             TimerStart(self._handle,self.time,self.periodic,self.callback)
 
     @staticmethod
-    def getExpired():
+    def get_expired():
         t = Handle.handles[GetExpiredTimer()]
         return t
 
@@ -38,8 +36,8 @@ class Timer(Handle):
         self.lose()
         DestroyTimer(self._handle)
 
-    def getElapsed(self):
+    def get_elapsed(self):
         return TimerGetElapsed(self._handle)
 
-    def getRemaining(self):
+    def get_remaining(self):
         return TimerGetRemaining(self._handle)

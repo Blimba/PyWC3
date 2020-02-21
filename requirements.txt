@@ -1,1 +1,2 @@
+numpy
 pythonlua>=0.0

@@ -6,6 +6,7 @@ from pythonlua.translator import Translator
 import shutil
 import json
 
+
 class Map:
     def __init__(self, file, **kwargs):
         with open("config.json","r") as f:
@@ -73,6 +74,39 @@ class Map:
         return self.translator.translate(
             content)  # re.sub("local (.+) = require \"(.+)\"","",self.translator.translate(content))
 
+
+    def import_tree_to_list(self,lst):
+        flatten = lambda x: [y for l in x for y in flatten(l)] if type(x) is list else [x]
+        def unique(l):
+            rl = []
+            for i in l:
+                if i not in rl:
+                    rl.append(i)
+            return rl
+        filelst = unique(flatten(lst))
+        nfilelst = filelst.copy()
+
+        try:
+            while isinstance(lst[0][0],list):
+                lst = lst[0]
+        except:
+            pass
+
+        for file1 in filelst:
+            for unp in lst:
+                file2 = unp[0]
+                try:
+                    sub = unp[1:]
+                except:
+                    sub = []
+                if file1 != file2:
+                    if file1 in flatten(sub):
+                        i1 = nfilelst.index(file1)
+                        i2 = nfilelst.index(file2)
+                        if i1 > i2:
+                            nfilelst[i1], nfilelst[i2] = nfilelst[i2], nfilelst[i1]
+        return nfilelst
+
     def get_dependencies(self, file, exclude=True):
         print("> Reading file {}...".format(file))
         try:
@@ -84,26 +118,27 @@ class Map:
                 if re.match("^#.*DO NOT INCLUDE.*$", content, flags=re.MULTILINE):
                     return []
                 if not exclude:
-                    lst.append(file)
+                    lst.append([file])
+                else:
+                    lst.append([])
 
-                matches = re.findall("^import (.+)", content, re.MULTILINE)
-                for match in matches:
-                    newfile = re.sub('(?<!\.)\.(?!\.)', '\\\\', match).strip('\\')
-                    newfile = re.sub('\.\.', '..\\\\', newfile)
-                    path = os.path.normpath(os.path.join(srcdir, newfile))
-                    for d in self.get_dependencies("{}.py".format(path), exclude=False):
-                        if d not in lst:
-                            lst.append(d)
-                matches = re.findall("^from (.+) import", content, re.MULTILINE)
-                for match in matches:
-                    newfile = re.sub('(?<!\.)\.(?!\.)', '\\\\', match).strip('\\')
-                    newfile = re.sub('\.\.', '..\\\\', newfile)
-                    path = os.path.normpath(os.path.join(srcdir, newfile))
-                    for d in self.get_dependencies("{}.py".format(path), exclude=False):
-                        if d not in lst:
-                            lst.append(d)
+                rematcher = [
+                    re.findall("^import (.+)", content, re.MULTILINE),
+                    re.findall("^from (.+) import", content, re.MULTILINE),
+                ]
+                for matches in rematcher:
+                    for match in matches:
+                        newfile = re.sub('(?<!\.)\.(?!\.)', '\\\\', match).strip('\\')
+                        newfile = re.sub('\.\.', '..\\\\', newfile)
+                        path = os.path.normpath(os.path.join(srcdir, newfile))
+                        for d in self.get_dependencies("{}.py".format(path), exclude=False):
+                            # if d not in lst:
+                            lst[-1].append(d)
+
         except FileNotFoundError:
             print("WARNING: cannot find python source file {}".format(file))
+        # try: print(lst)
+        # except: pass
         try: return lst
         except: return []
 
@@ -138,7 +173,7 @@ class Map:
             print("> Writing lua header...")
             f.write(Translator.get_luainit())
             # write python required libraries
-            for file in self.get_dependencies(os.path.join(self.cfg['PYTHON_SOURCE_FOLDER'], "{}.py".format(filename))):
+            for file in self.import_tree_to_list(self.get_dependencies(os.path.join(self.cfg['PYTHON_SOURCE_FOLDER'], "{}.py".format(filename)))):
                 f.write("-- Imported module {}\n".format(file))
                 f.write(self.translate_file(file))
                 print("> Appended file {}.".format(file))
