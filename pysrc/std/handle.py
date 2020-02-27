@@ -2,7 +2,11 @@ class Handle:
     handles = {}
 
     def __init__(self, constructorfunc, *args):
-        self._handle = constructorfunc(*args)
+        # constructorfunc can be a function that returns a handle, or a handle directly
+        if callable(constructorfunc):
+            self._handle = constructorfunc(*args)
+        else:
+            self._handle = constructorfunc
         self.track()
 
     def track(self):

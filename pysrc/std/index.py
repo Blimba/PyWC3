@@ -16,14 +16,23 @@ hooks = {
 oldMain = main
 oldConfig = config
 def newmain():
-    for func in hooks[MAIN_BEFORE]: func()
+    for func in hooks[MAIN_BEFORE]:
+        try: func()
+        except: print(Error)
     oldMain()
-    for func in hooks[MAIN_AFTER]: func()
+    for func in hooks[MAIN_AFTER]:
+        try: func()
+        except: print(Error)
 
 def newconfig():
-    for func in hooks[CONFIG_BEFORE]: func()
+    for func in hooks[CONFIG_BEFORE]:
+        try: func()
+        except: print(Error)
     oldConfig()
-    for func in hooks[CONFIG_AFTER]: func()
+    for func in hooks[CONFIG_AFTER]:
+        try: func()
+        except: print(Error)
+
 
 main = newmain
 config = newconfig

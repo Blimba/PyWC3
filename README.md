@@ -137,7 +137,7 @@ config = replaced
 from std.index import *
 from std.timer import Timer
 def timeout():
-    t = Timer.getExpired()
+    t = Timer.get_expired()
     print(t.data)
     t.destroy()
 
