@@ -84,7 +84,7 @@ class Map:
                 if i not in rl:
                     rl.append(i)
             return rl
-        filelst = unique(flatten(lst))
+        filelst = unique(flatten(lst))[::-1]
         nfilelst = filelst.copy()
 
         try:

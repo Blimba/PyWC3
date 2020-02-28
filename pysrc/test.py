@@ -1,8 +1,8 @@
 from std.index import *
 # from std.timer import Timer
 # from std.effect import Effect
-from lib.point import *
-from lib.vector3 import *
+# from lib.point import *
+# from lib.vector3 import *
 # from df.test import *
 from lib.particle import *
 # from lib.itimer import *
