@@ -28,6 +28,8 @@ function Trig_Melee_Initialization_Actions()
     FogEnableOff()
     FogMaskEnableOff()
     SetUnitPositionLoc(gg_unit_hpea_0000, GetRectCenter(GetPlayableMapRect()))
+    BlzSetUnitBaseDamage(gg_unit_hpea_0000, 50, 0)
+    SetUnitLookAt(gg_unit_hpea_0000, "bone_chest", gg_unit_hpea_0000, 0, 0, 90)
 end
 
 function InitTrig_Melee_Initialization()

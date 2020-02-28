@@ -28,46 +28,94 @@ GroupEnumUnitsInRangeOfLocCounted
 
 """
 
+class UnitInventory:
+    def __init__(self,unit):
+        self._items = []
+        self._unit = unit
+        self._size = UnitInventorySize(self._unit._handle)
+        for i in range(self._size):
+            self._items.append(UnitItemInSlot(self._unit._handle, i))
+
+    def __getitem__(self, item):
+        if isinstance(item, int) and item < self._size:
+            return self._items[item]
+        return None
+
+    def __contains__(self, item):
+        return item in self._items
+
+    def list_type(self,itemtype):
+        lst = []
+        for i in self._items:
+            if GetItemTypeId(i) == itemtype:
+                lst.append(i)
+        return lst
+
 
 class UnitWeapon:
     def __init__(self,unit,index):
         self.parent = unit
         self.index = index
+        if index > 1 or index < 0:
+            print("Warning: weapon index other than 0 or 1 used in UnitWeapon.")
+
+    @property
+    def damage_tuple(self):
+        return (BlzGetUnitBaseDamage(self.parent, self.index),
+                BlzGetUnitDiceNumber(self.parent, self.index),
+                BlzGetUnitDiceSides(self.parent, self.index))
+    @damage_tuple.setter
+    def damage_tuple(self,tuple):
+        BlzSetUnitBaseDamage(self.parent, tuple[0], self.index)
+        BlzSetUnitDiceNumber(self.parent, tuple[1], self.index)
+        BlzSetUnitDiceSides(self.parent, tuple[2], self.index)
     @property
     def base_damage(self):
-        return BlzGetUnitBaseDamage(self.unit, self.index)
+        return BlzGetUnitBaseDamage(self.parent, self.index)
     @base_damage.setter
     def base_damage(self,dmg):
-        BlzSetUnitBaseDamage(self.unit, dmg, self.index)
+        BlzSetUnitBaseDamage(self.parent, dmg, self.index)
 
     @property
     def dice_number(self):
-        return BlzGetUnitDiceNumber(self.unit, self.index)
+        return BlzGetUnitDiceNumber(self.parent, self.index)
     @dice_number.setter
     def dice_number(self,dn):
-        BlzSetUnitDiceNumber(self.unit, dn, self.index)
+        BlzSetUnitDiceNumber(self.parent, dn, self.index)
 
     @property
     def dice_sides(self):
-        return BlzGetUnitDiceSides(self.unit, self.index)
+        return BlzGetUnitDiceSides(self.parent, self.index)
     @dice_sides.setter
     def dice_sides(self,sides):
-        BlzSetUnitDiceSides(self.unit, sides, self.index)
+        BlzSetUnitDiceSides(self.parent, sides, self.index)
 
     @property
     def cooldown(self):
-        return BlzGetUnitAttackCooldown(self.unit, self.index)
+        return BlzGetUnitAttackCooldown(self.parent, self.index)
     @cooldown.setter
     def cooldown(self,cd):
-        BlzSetUnitAttackCooldown(self.unit, cd, self.index)
+        BlzSetUnitAttackCooldown(self.parent, cd, self.index)
 
     ## implement fields
 
 class UnitAbility:
     def __init__(self,unit,id):
         self.parent = unit
-        self.id = id
-        self.ability = BlzGetUnitAbility(self._handle, id)
+        if isinstance(id,str):
+            self.id = FourCC(id)
+        else:
+            self.id = id
+        # self.ability = BlzGetUnitAbility(self._handle, self.id)
+        # print(self.ability)
+
+    def remove(self):
+        UnitRemoveAbility(self.parent,self.id)
+        return self
+
+    def add(self):
+        UnitAddAbility(self.parent,self.id)
+        return self
 
     @property
     def level(self):
@@ -126,6 +174,10 @@ class Unit(Handle):
     def weapon(self,index):
         return UnitWeapon(self._handle,index)
 
+    @property
+    def items(self):
+        return UnitInventory(self._handle)
+
     # order functions
     def order(self, o, *args):
         if len(args) == 0:
@@ -134,6 +186,22 @@ class Unit(Handle):
             IssueTargetOrder(self._handle, o, args[0])
         elif len(args) == 2:
             IssuePointOrder(self._handle, o, args[0], args[1])
+
+    def use_item(self, i, *args):
+        if len(args) == 0:
+            UnitUseItem(self._handle, i)
+        elif len(args) == 1:
+            UnitUseItemTarget(self._handle, i, args[0])
+        elif len(args) == 2:
+            UnitUseItemPoint(self._handle, i, args[0], args[1])
+
+    def drop_item(self, i, *args):
+        if len(args) == 1:
+            UnitDropItemTarget(self._handle, i, args[0])
+        elif len(args) == 2:
+            UnitDropItemPoint(self._handle,i,args[0],args[1])
+
+
 
     # unit lists (removes need for groups)
     @staticmethod
@@ -163,6 +231,11 @@ class Unit(Handle):
         return Unit._list(GroupEnumUnitsSelected,Player(playerid),filter)
 
     # simple actions
+    def show(self):
+        ShowUnit(self._handle,True)
+    def hide(self):
+        ShowUnit(self._handle,False)
+
     def kill(self):
         KillUnit(self._handle)
 
@@ -174,6 +247,21 @@ class Unit(Handle):
 
     def is_visible_for_player(self,playerid):
         return IsUnitVisible(self._handle,Player(playerid))
+
+    def is_type(self, type):
+        return IsUnitType(self._handle, type)
+
+    def is_race(self, race):
+        return IsUnitRace(self._handle,race)
+
+    def is_allied(self, playerid):
+        return IsUnitAlly(self._handle, Player(playerid))
+
+    def is_enemy(self, playerid):
+        return IsUnitEnemy(self._handle, Player(playerid))
+
+    def is_invisible_to_player(self, playerid):
+        return IsUnitInvisible(self._handle, Player(playerid))
 
     def animate(self,animation):
         if isinstance(animation,str):
@@ -189,6 +277,30 @@ class Unit(Handle):
     # manual properties
 
     @property
+    def life(self):
+        return GetWidgetLife(self._handle)
+
+    @life.setter
+    def life(self,hp):
+        SetWidgetLife(self._handle, hp)
+
+    @property
+    def mana(self):
+        return GetUnitState(self._handle, UNIT_STATE_MANA)
+
+    @mana.setter
+    def mana(self,newmana):
+        SetUnitState(self._handle, UNIT_STATE_MANA, newmana)
+
+    @property
+    def food_used(self):
+        return GetUnitFoodUsed(self._handle)
+
+    @property
+    def race(self):
+        return GetUnitRace(self._handle)
+
+    @property
     def level(self):
         return GetUnitLevel(self._handle)
 
@@ -199,8 +311,6 @@ class Unit(Handle):
     @owner.setter
     def owner(self,playerid):
         SetUnitOwner(self._handle, Player(playerid), True)
-
-
 
     @property
     def move_speed(self):
@@ -286,8 +396,9 @@ class Unit(Handle):
         MoveLocation(Unit._loc, x, y)
         SetUnitFlyHeight(self._handle, z - GetLocationZ(Unit._loc), 0.0)  # test if 0 works
 
-    def look_along(self,x,y,z,bone="chest"):
-        SetUnitLookAt(self._handle,bone,self._handle,x,y,z)
+    def look_along(self,x,y,z,bone="bone_chest"):
+        SetUnitLookAt(self._handle,bone,self._handle,x*100,y*100,z*100)
+
 
 
     # Automatically generated get unit functions

@@ -7,6 +7,8 @@ class Handle:
             self._handle = constructorfunc(*args)
         else:
             self._handle = constructorfunc
+            if self.get(constructorfunc) != None:
+                print("Warning: secondary object created for handle ", constructorfunc)
         self.track()
 
     def track(self):
