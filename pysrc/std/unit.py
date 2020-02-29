@@ -326,7 +326,7 @@ class Unit(Handle):
 
     @face.setter
     def face(self,newface):
-        SetUnitFacingTimed(self._handle, newface, 0.01)  # consider this immediate
+        BlzSetUnitFacingEx(self._handle, newface)
 
     @property
     def name(self):

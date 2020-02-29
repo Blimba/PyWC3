@@ -348,6 +348,7 @@ globals
     constant integer ZEPPELIN           =  ZEPPLIN
     constant integer W2_WARLOCK         = 'nw2w'
     constant integer PIG_FARM           = 'npgf'
+    constant integer FOREST_TROLL       = 'nftr'
 
     // special orc units
     constant integer CHAOS_GRUNT        = 'nchg'
@@ -603,14 +604,14 @@ globals
     //--------------------------------------------------------------------
 
     // naga heroes
-    constant integer NAGA_SORCERESS     = 'Nngs' 
-    constant integer NAGA_VASHJ         = 'Hvsh' 
+    constant integer NAGA_SORCERESS     = 'Nngs'
+    constant integer NAGA_VASHJ         = 'Hvsh'
 
     // naga units
     constant integer NAGA_DRAGON        = 'nsnp'        // old names
     constant integer NAGA_WITCH         = 'nnsw'
-    constant integer NAGA_SERPENT       = 'nwgs' 
-    constant integer NAGA_HYDRA         = 'nhyc'    
+    constant integer NAGA_SERPENT       = 'nwgs'
+    constant integer NAGA_HYDRA         = 'nhyc'
 
     constant integer NAGA_SLAVE         = 'nmpe'        // peon
     constant integer NAGA_SNAP_DRAGON   =  NAGA_DRAGON  // weak ranged
@@ -1075,7 +1076,7 @@ endfunction
 
 //============================================================================
 function HallsCompleted takes integer unitid returns boolean
-    return GetUnitCount(unitid) == GetUnitCountDone(unitid) 
+    return GetUnitCount(unitid) == GetUnitCountDone(unitid)
 endfunction
 
 //============================================================================
@@ -1539,7 +1540,7 @@ endfunction
 
 //============================================================================
 function CampaignAttacker takes integer level, integer qty, integer unitid returns nothing
-    if qty > 0 and difficulty >= level then 
+    if qty > 0 and difficulty >= level then
         call SetAssaultGroup(qty,qty,unitid)
     endif
 endfunction
@@ -2121,7 +2122,7 @@ function GetAllyCount takes player whichPlayer returns integer
                 endif
             endif
         endif
-         
+
         set playerIndex = playerIndex + 1
         exitwhen playerIndex == 12
     endloop
@@ -2134,7 +2135,7 @@ endfunction
 //============================================================================
 function SingleMeleeAttack takes boolean needs_exp, boolean has_siege, boolean major_ok, boolean air_units returns nothing
     local boolean   can_siege
-    local real      daytime 
+    local real      daytime
     local unit      hall
     local unit      mega
     local unit      creep
@@ -2518,7 +2519,7 @@ function AwaitMeleeHeroes takes nothing returns nothing
 endfunction
 
 //============================================================================
-//  PickMeleeHero 
+//  PickMeleeHero
 //============================================================================
 function PickMeleeHero takes race raceid returns integer
     local integer first

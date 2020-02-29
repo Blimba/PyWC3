@@ -21,17 +21,20 @@ class Jass:
         outf = os.path.join(cfg['PYTHON_SOURCE_FOLDER'],cfg['DEF_SUBFOLDER'],'commonj.py')
         with open(outf, "w") as f:
             f.write("# -- DO NOT INCLUDE --\n")
-
             for match in funcs:
-                if match[2] != "nothing":
-                    vars = match[2].split(",")
+                if match[0] == 'constant' or match[0] == '':
+                    match = [m for m in match[1:]]
+                if match[1] != "nothing":
+                    vars = match[1].split(",")
                     names = [var.split(" ")[-1] for var in vars]
                 else:
                     names = []
-                f.write("{} = lambda {}: None\n".format(match[1],", ".join(names)))
+                f.write("{} = lambda {}: None\n".format(match[0],", ".join(names)))
             for match in consts:
-                rs = re.sub("(\$[A-Z0-9]+)",lambda obj: str(int("0x{}".format(obj.group(0)[1:]),16)),match[3])
-                f.write("{} = {}\n".format(match[2],rs.replace("false","False").replace("true","True")))
+                if match[0] == 'constant' or match[0] == '':
+                    match = [m for m in match[1:]]
+                rs = re.sub("(\$[A-Z0-9]+)",lambda obj: str(int("0x{}".format(obj.group(0)[1:]),16)),match[2])
+                f.write("{} = {}\n".format(match[1],rs.replace("false","False").replace("true","True")))
         print("Saved to {}.".format(outf))
 
     @staticmethod

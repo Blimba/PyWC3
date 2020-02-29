@@ -33,7 +33,9 @@ globals
     constant real      bj_QUEUE_DELAY_HINT              =  5.00
     constant real      bj_QUEUE_DELAY_SECRET            =  3.00
     constant real      bj_HANDICAP_EASY                 = 60.00
+    constant real      bj_HANDICAP_NORMAL               = 90.00
     constant real      bj_HANDICAPDAMAGE_EASY           = 50.00
+    constant real      bj_HANDICAPDAMAGE_NORMAL         = 90.00
 	constant real      bj_HANDICAPREVIVE_NOTHARD        = 50.00
     constant real      bj_GAME_STARTED_THRESHOLD        =  0.01
     constant real      bj_WAIT_FOR_COND_MIN_INTERVAL    =  0.10
@@ -418,12 +420,14 @@ globals
 	
     // Campaign Minimap icon styles
     constant integer   bj_CAMPPINGSTYLE_PRIMARY			= 0
-    constant integer   bj_CAMPPINGSTYLE_BONUS			= 1
-    constant integer   bj_CAMPPINGSTYLE_TURNIN			= 2
-	constant integer   bj_CAMPPINGSTYLE_BOSS			= 3
-	constant integer   bj_CAMPPINGSTYLE_CONTROL_ALLY	= 4
-	constant integer   bj_CAMPPINGSTYLE_CONTROL_NEUTRAL	= 5
-	constant integer   bj_CAMPPINGSTYLE_CONTROL_ENEMY	= 6
+    constant integer   bj_CAMPPINGSTYLE_PRIMARY_GREEN   = 1
+    constant integer   bj_CAMPPINGSTYLE_PRIMARY_RED     = 2
+    constant integer   bj_CAMPPINGSTYLE_BONUS			= 3
+    constant integer   bj_CAMPPINGSTYLE_TURNIN			= 4
+	constant integer   bj_CAMPPINGSTYLE_BOSS			= 5
+	constant integer   bj_CAMPPINGSTYLE_CONTROL_ALLY	= 6
+	constant integer   bj_CAMPPINGSTYLE_CONTROL_NEUTRAL	= 7
+	constant integer   bj_CAMPPINGSTYLE_CONTROL_ENEMY	= 8
 
     // Corpse creation settings
     constant real      bj_CORPSE_MAX_DEATH_TIME    = 8.00
@@ -1233,7 +1237,8 @@ endfunction
 // clipping the result to 0..max in case the input is invalid.
 //
 function PercentToInt takes real percentage, integer max returns integer
-    local integer result = R2I(percentage * I2R(max) * 0.01)
+    local real realpercent = percentage * I2R(max) * 0.01
+    local integer result = MathRound(realpercent)
 
     if (result < 0) then
         set result = 0
@@ -1898,6 +1903,11 @@ function TriggerRegisterUpgradeCommandEventBJ takes trigger trig, integer techId
 endfunction
 
 //===========================================================================
+function TriggerRegisterCommonCommandEventBJ takes trigger trig, string order returns event
+    return TriggerRegisterCommandEvent(trig, 0, order)
+endfunction
+
+//===========================================================================
 function TriggerRegisterGameLoadedEventBJ takes trigger trig returns event
     return TriggerRegisterGameEvent(trig, EVENT_GAME_LOADED)
 endfunction
@@ -2269,6 +2279,18 @@ function CampaignMinimapIconUnitBJ takes unit whichUnit, integer style returns n
 		set green 	= 0
 		set blue	= 0
 		set path	= SkinManagerGetLocalPath( "MinimapQuestObjectivePrimary" )
+	elseif ( style == bj_CAMPPINGSTYLE_PRIMARY_GREEN ) then
+		// green
+		set red 	= 0
+		set green 	= 255
+		set blue	= 0
+		set path	= SkinManagerGetLocalPath( "MinimapQuestObjectivePrimary" )
+	elseif ( style == bj_CAMPPINGSTYLE_PRIMARY_RED ) then
+		// green
+		set red 	= 255
+		set green 	= 0
+		set blue	= 0
+		set path	= SkinManagerGetLocalPath( "MinimapQuestObjectivePrimary" )
 	elseif ( style == bj_CAMPPINGSTYLE_BONUS ) then
 		// yellow
 		set red 	= 255
@@ -2321,6 +2343,18 @@ function CampaignMinimapIconLocBJ takes location where, integer style returns no
 		// green (different from the unit version)
 		set red 	= 0
 		set green 	= 255
+		set blue	= 0
+		set path	= SkinManagerGetLocalPath( "MinimapQuestObjectivePrimary" )
+	elseif ( style == bj_CAMPPINGSTYLE_PRIMARY_GREEN ) then
+		// green (different from the unit version)
+		set red 	= 0
+		set green 	= 255
+		set blue	= 0
+		set path	= SkinManagerGetLocalPath( "MinimapQuestObjectivePrimary" )
+	elseif ( style == bj_CAMPPINGSTYLE_PRIMARY_RED ) then
+		// green (different from the unit version)
+		set red 	= 255
+		set green 	= 0
 		set blue	= 0
 		set path	= SkinManagerGetLocalPath( "MinimapQuestObjectivePrimary" )
 	elseif ( style == bj_CAMPPINGSTYLE_BONUS ) then
@@ -2494,6 +2528,11 @@ endfunction
 //===========================================================================
 function SetMusicVolumeBJ takes real volumePercent returns nothing
     call SetMusicVolume(PercentToInt(volumePercent, 127))
+endfunction
+
+//===========================================================================
+function SetThematicMusicVolumeBJ takes real volumePercent returns nothing
+    call SetThematicMusicVolume(PercentToInt(volumePercent, 127))
 endfunction
 
 //===========================================================================
@@ -2765,6 +2804,12 @@ endfunction
 //===========================================================================
 function CreateUpgradeCommandButtonEffectBJ takes integer techId returns commandbuttoneffect
     set bj_lastCreatedCommandButtonEffect = CreateUpgradeCommandButtonEffect(techId)
+    return bj_lastCreatedCommandButtonEffect
+endfunction
+
+//===========================================================================
+function CreateCommonCommandButtonEffectBJ takes string order returns commandbuttoneffect
+    set bj_lastCreatedCommandButtonEffect = CreateCommandButtonEffect(0, order)
     return bj_lastCreatedCommandButtonEffect
 endfunction
 
@@ -6723,28 +6768,6 @@ function TransmissionFromUnitWithNameBJ takes force toForce, unit whichUnit, str
 endfunction
 
 //===========================================================================
-function PlayDialogueFromSpeaker takes force toForce, unit speaker, sound soundHandle, integer timeType, real timeVal, boolean wait returns nothing
-    call TryInitCinematicBehaviorBJ()
-
-    call AttachSoundToUnit(soundHandle, speaker)
-
-    // Ensure that the time value is non-negative.
-    set timeVal = RMaxBJ(timeVal, 0)
-
-    set bj_lastTransmissionDuration = GetTransmissionDuration(soundHandle, timeType, timeVal)
-    set bj_lastPlayedSound = soundHandle
-
-    if (IsPlayerInForce(GetLocalPlayer(), toForce)) then
-        call PlaySoundBJ(soundHandle)
-    endif
-
-    if wait and (bj_lastTransmissionDuration > 0) then
-        // call TriggerSleepAction(bj_lastTransmissionDuration)
-        call WaitTransmissionDuration(soundHandle, timeType, timeVal)
-    endif
-endfunction
-
-//===========================================================================
 function PlayDialogueFromSpeakerEx takes force toForce, unit speaker, integer speakerType, sound soundHandle, integer timeType, real timeVal, boolean wait returns boolean
     //Make sure that the runtime unit type and the parameter are the same,
     //otherwise the offline animations will not match and will fail
@@ -6764,7 +6787,7 @@ function PlayDialogueFromSpeakerEx takes force toForce, unit speaker, integer sp
     set bj_lastPlayedSound = soundHandle
 
     if (IsPlayerInForce(GetLocalPlayer(), toForce)) then
-        call SetCinematicSceneBJ(soundHandle, speakerType, GetPlayerColor(GetLocalPlayer()), GetLocalizedString(GetDialogueSpeakerNameKey(soundHandle)), GetLocalizedString(GetDialogueTextKey(soundHandle)), bj_lastTransmissionDuration + bj_TRANSMISSION_PORT_HANGTIME, bj_lastTransmissionDuration)
+        call SetCinematicSceneBJ(soundHandle, speakerType, GetPlayerColor(GetOwningPlayer(speaker)), GetLocalizedString(GetDialogueSpeakerNameKey(soundHandle)), GetLocalizedString(GetDialogueTextKey(soundHandle)), bj_lastTransmissionDuration + bj_TRANSMISSION_PORT_HANGTIME, bj_lastTransmissionDuration)
     endif
 
     if wait and (bj_lastTransmissionDuration > 0) then
@@ -6776,7 +6799,7 @@ function PlayDialogueFromSpeakerEx takes force toForce, unit speaker, integer sp
 endfunction
 
 //===========================================================================
-function PlayDialogueFromSpeakerType takes force toForce, player fromPlayer, integer speakerType, location loc, sound soundHandle, integer timeType, real timeVal, boolean wait returns boolean
+function PlayDialogueFromSpeakerTypeEx takes force toForce, player fromPlayer, integer speakerType, location loc, sound soundHandle, integer timeType, real timeVal, boolean wait returns boolean
     call TryInitCinematicBehaviorBJ()
 
     // Ensure that the time value is non-negative.
@@ -6798,11 +6821,6 @@ function PlayDialogueFromSpeakerType takes force toForce, player fromPlayer, int
     endif
 
     return true
-endfunction
-
-//===========================================================================
-function PlayDialogueFromSpeakerTypeEx takes force toForce, player fromPlayer, integer speakerType, location loc, sound soundHandle, integer timeType, real timeVal, boolean wait returns boolean
-    return PlayDialogueFromSpeakerType(toForce, fromPlayer, speakerType, loc, soundHandle, timeType, timeVal, wait)
 endfunction
 
 //===========================================================================
@@ -6876,6 +6894,7 @@ function CinematicModeExBJ takes boolean cineMode, force forForce, real interfac
     if (cineMode) then
         // Save the UI state so that we can restore it later.
         if (not bj_cineModeAlreadyIn) then
+            call SetCinematicAudio(true)
             set bj_cineModeAlreadyIn = true
             set bj_cineModePriorSpeed = GetGameSpeed()
             set bj_cineModePriorFogSetting = IsFogEnabled()
@@ -6906,6 +6925,7 @@ function CinematicModeExBJ takes boolean cineMode, force forForce, real interfac
         call SetRandomSeed(0)
     else
         set bj_cineModeAlreadyIn = false
+        call SetCinematicAudio(false)
 
         // Perform local changes
         if (IsPlayerInForce(GetLocalPlayer(), forForce)) then
@@ -6960,8 +6980,8 @@ function CinematicFadeCommonBJ takes real red, real green, real blue, real durat
     call SetCineFilterTexMapFlags(TEXMAP_FLAG_NONE)
     call SetCineFilterStartUV(0, 0, 1, 1)
     call SetCineFilterEndUV(0, 0, 1, 1)
-    call SetCineFilterStartColor(PercentTo255(red), PercentTo255(green), PercentTo255(blue), PercentTo255(100-startTrans))
-    call SetCineFilterEndColor(PercentTo255(red), PercentTo255(green), PercentTo255(blue), PercentTo255(100-endTrans))
+    call SetCineFilterStartColor(PercentTo255(red), PercentTo255(green), PercentTo255(blue), PercentTo255(100.0-startTrans))
+    call SetCineFilterEndColor(PercentTo255(red), PercentTo255(green), PercentTo255(blue), PercentTo255(100.0-endTrans))
     call SetCineFilterDuration(duration)
     call DisplayCineFilter(true)
 endfunction
@@ -7045,8 +7065,8 @@ function CinematicFilterGenericBJ takes real duration, blendmode bmode, string t
     call SetCineFilterTexMapFlags(TEXMAP_FLAG_NONE)
     call SetCineFilterStartUV(0, 0, 1, 1)
     call SetCineFilterEndUV(0, 0, 1, 1)
-    call SetCineFilterStartColor(PercentTo255(red0), PercentTo255(green0), PercentTo255(blue0), PercentTo255(100-trans0))
-    call SetCineFilterEndColor(PercentTo255(red1), PercentTo255(green1), PercentTo255(blue1), PercentTo255(100-trans1))
+    call SetCineFilterStartColor(PercentTo255(red0), PercentTo255(green0), PercentTo255(blue0), PercentTo255(100.0-trans0))
+    call SetCineFilterEndColor(PercentTo255(red1), PercentTo255(green1), PercentTo255(blue1), PercentTo255(100.0-trans1))
     call SetCineFilterDuration(duration)
     call DisplayCineFilter(true)
 endfunction
@@ -7293,7 +7313,7 @@ function SetCinematicAvailableBJ takes boolean available, integer cinematicIndex
         call PlayCinematic( "NightElfEd" )
     elseif (cinematicIndex == bj_CINEMATICINDEX_XOP) then
         call SetOpCinematicAvailable( bj_CAMPAIGN_OFFSET_XN, available )
-        call PlayCinematic( "IntroX" )
+        // call PlayCinematic( "IntroX" )
     elseif (cinematicIndex == bj_CINEMATICINDEX_XED) then
         call SetEdCinematicAvailable( bj_CAMPAIGN_OFFSET_XU, available )
         call PlayCinematic( "OutroX" )
@@ -9177,7 +9197,7 @@ function MeleeGetAllyKeyStructureCount takes player whichPlayer returns integer
     loop
         set indexPlayer = Player(playerIndex)
         if (PlayersAreCoAllied(whichPlayer, indexPlayer)) then
-            set keyStructs = BlzGetPlayerTownHallCount(indexPlayer)
+            set keyStructs = keyStructs + BlzGetPlayerTownHallCount(indexPlayer)
         endif
             
         set playerIndex = playerIndex + 1
@@ -9515,11 +9535,11 @@ endfunction
 
 //===========================================================================
 function MeleePlayerIsCrippled takes player whichPlayer returns boolean
-    local integer allyStructures    = MeleeGetAllyStructureCount(whichPlayer)
-    local integer allyKeyStructures = MeleeGetAllyKeyStructureCount(whichPlayer)
+    local integer playerStructures  = GetPlayerStructureCount(whichPlayer, true)
+    local integer playerKeyStructures = BlzGetPlayerTownHallCount(whichPlayer)
 
-    // Dead teams are not considered to be crippled.
-    return (allyStructures > 0) and (allyKeyStructures <= 0)
+    // Dead players are not considered to be crippled.
+    return (playerStructures > 0) and (playerKeyStructures <= 0)
 endfunction
 
 //===========================================================================
