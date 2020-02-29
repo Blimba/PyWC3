@@ -147,3 +147,22 @@ def test():
     t.start(1.0,timeout)
 AddScriptHook(test,MAIN_AFTER)
 ```
+- A Unit module
+
+Here is a bit of example code. Full documentation in progress...
+```python
+u = Unit(0, "hfoo", 0, 0)  # create a unit for player 0 (red) at x: 0, y: 0.
+u.name = "My Footy"  # change the unit name
+print(u.name)  # or print it
+u.max_hp = 500
+u.life = 50
+
+# make a subclass that has a function that is called upon death
+class EventUnit(Unit):
+    def on_death(self):
+        print(self.name,"has died")
+
+u2 = EventUnit(0, "hpea", 128, 0)  # create a unit with an on_death event
+u2.on_ordered = lambda self: print(self.name, "has been ordered")  # add an event for ordering
+
+```
