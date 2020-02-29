@@ -1,6 +1,8 @@
 from handle import *
 from ..df.commonj import *
 from compatibility import *
+from ..df.blizzardj import bj_MAX_PLAYERS
+from index import *
 import math
 
 """
@@ -25,7 +27,74 @@ GroupEnumUnitsInRangeOfLoc
 GroupEnumUnitsInRangeCounted
 GroupEnumUnitsInRangeOfLocCounted
 
+UnitStripHeroLevel
+UnitModifySkillPoints
+DecUnitAbilityLevel
+IncUnitAbilityLevel
+SetUnitExploded
+SetUnitInvulnerable
+GetUnitPointValueByType
+UnitAddItemById
+UnitHasItem
+UnitDropItemSlot
+GetUnitLoc
+GetUnitDefaultMoveSpeed
+GetUnitRallyPoint
+GetUnitRallyUnit
+GetUnitRallyDestructable
+IsUnitInGroup
+IsUnitInForce
+IsUnitOwnedByPlayer
+IsUnitDetected
+IsUnitFogged
+IsUnitMasked
+IsUnitInRange
+IsUnitInRangeXY
+IsUnitInRangeLoc
+IsHeroUnitId
+IsUnitIdType
+AddUnitToAllStock
+AddUnitToStock
+RemoveUnitFromAllStock
+RemoveUnitFromStock
+SetAllUnitTypeSlots
+SetUnitTypeSlots
+GetPlayerUnitCount
+GetPlayerTypedUnitCount
+SetPlayerUnitsOwner
+StoreUnit					
+SyncStoredUnit
+HaveStoredUnit					
+FlushStoredUnit					
+RestoreUnit					
+SaveUnitHandle				
+SaveUnitPoolHandle			
+LoadUnitHandle			
+LoadUnitPoolHandle		
+CreateUnitPool
+DestroyUnitPool
+UnitPoolAddUnitType
+UnitPoolRemoveUnitType
+PlaceRandomUnit
+SetUnitFog
+CreateMinimapIconOnUnit
+SetTextTagPosUnit
+AttachSoundToUnit
 
+GroupAddUnit
+BlzGroupUnitAt
+IsUnitInRegion
+
+CreateUnitByName
+CreateUnitAtLoc
+CreateUnitAtLocByName
+SetUnitPosition
+SetUnitPositionLoc
+SetUnitFacingTimed
+SetUnitCreepGuard
+
+
+BlzGetLocalUnitZ
 """
 
 class UnitInventory:
@@ -41,6 +110,10 @@ class UnitInventory:
             return self._items[item]
         return None
 
+    def __setitem__(self, key, value):
+        if isinstance(key, int) and key < self._size:
+            UnitAddItemToSlotById(value)
+
     def __contains__(self, item):
         return item in self._items
 
@@ -51,6 +124,8 @@ class UnitInventory:
                 lst.append(i)
         return lst
 
+    def remove(self,index):
+        UnitRemoveItemFromSlot(self._unit,index)
 
 class UnitWeapon:
     def __init__(self,unit,index):
@@ -116,6 +191,21 @@ class UnitAbility:
     def add(self):
         UnitAddAbility(self.parent,self.id)
         return self
+
+    def start_cooldown(self):
+        BlzStartUnitAbilityCooldown(self.parent, self.id, self.cooldown)
+    def reset_cooldown(self):
+        BlzEndUnitAbilityCooldown(self.parent, self.id)
+
+    def hide(self,flag=True):
+        BlzUnitHideAbility(self.parent, self.id, flag)
+    def show(self,flag=True):
+        BlzUnitHideAbility(self.parent, self.id, not flag)
+
+    def disable(self,flag=True,hide=True):
+        BlzUnitDisableAbility(self.parent,self.id,flag,hide)
+    def enable(self,flag=True,hide=False):
+        BlzUnitDisableAbility(self.parent,self.id,not flag,hide)
 
     @property
     def level(self):
@@ -245,6 +335,18 @@ class Unit(Handle):
     def color(self, r, g, b, a=255):
         SetUnitVertexColor(self._handle, r, g, b, a)
 
+    def team_glow(self,show):
+        BlzShowUnitTeamGlow(self._handle,show)
+
+    def pathing(self,flag):
+        SetUnitPathing(self._handle,flag)
+
+    def blend_time(self,blendtime):
+        SetUnitBlendTime(self._handle,blendtime)
+
+    def use_food(self,usefood):
+        SetUnitUseFood(self._handle,usefood)
+
     def is_visible_for_player(self,playerid):
         return IsUnitVisible(self._handle,Player(playerid))
 
@@ -263,19 +365,109 @@ class Unit(Handle):
     def is_invisible_to_player(self, playerid):
         return IsUnitInvisible(self._handle, Player(playerid))
 
+    def is_illusion(self):
+        return IsUnitIllusion(self._handle)
+    
+    def is_hidden(self):
+        IsUnitHidden(self._handle)
+    
+    def is_in_transport(self,transport):
+        return IsUnitInTransport(self._handle,transport)
+
+    def is_loaded(self):
+        IsUnitLoaded(self._handle)
+
     def animate(self,animation):
         if isinstance(animation,str):
             SetUnitAnimation(self._handle, animation)
         elif isinstance(animation, int):
             SetUnitAnimationByIndex(self._handle, animation)
 
-
     # triggering
+    @staticmethod
+    def _death():
+        self = Unit.get_dying()
+        if callable(self.on_death):
+            self.on_death()
 
+    @staticmethod
+    def _attacked():
+        self = Unit.get_trigger()
+        if callable(self.on_attacked):
+            self.on_attacked(Unit.get_attacker())
 
+    @staticmethod
+    def _ordered():
+        self = Unit.get_ordered()
+        if callable(self.on_ordered):
+            self.on_ordered()
 
+    @staticmethod
+    def _damaged():
+        self = Unit.get_trigger()
+        if callable(self.on_damaged):
+            self.on_damaged(Unit.get_damage_source())
+
+    @staticmethod
+    def _damaging():
+        self = Unit.get_damage_source()
+        if callable(self.on_damaging):
+            self.on_damaging(Unit.get_trigger())
+
+    @staticmethod
+    def _make_triggers():
+        # death
+        t = CreateTrigger()
+        for i in range(bj_MAX_PLAYERS):
+            TriggerRegisterPlayerUnitEvent(t, Player(i), EVENT_PLAYER_UNIT_DEATH, None)
+        TriggerAddAction(t, Unit._death)
+
+        # attacked
+        t = CreateTrigger()
+        for i in range(bj_MAX_PLAYERS):
+            TriggerRegisterPlayerUnitEvent(t, Player(i), EVENT_PLAYER_UNIT_ATTACKED, None)
+        TriggerAddAction(t, Unit._attacked)
+
+        # orders
+        t = CreateTrigger()
+        for i in range(bj_MAX_PLAYERS):
+            TriggerRegisterPlayerUnitEvent(t, Player(i), EVENT_PLAYER_UNIT_ISSUED_ORDER, None)
+            TriggerRegisterPlayerUnitEvent(t, Player(i), EVENT_PLAYER_UNIT_ISSUED_POINT_ORDER, None)
+            TriggerRegisterPlayerUnitEvent(t, Player(i), EVENT_PLAYER_UNIT_ISSUED_TARGET_ORDER, None)
+            TriggerRegisterPlayerUnitEvent(t, Player(i), EVENT_PLAYER_UNIT_ISSUED_UNIT_ORDER, None)
+        TriggerAddAction(t, Unit._ordered)
+
+        #damage
+        t = CreateTrigger()
+        for i in range(bj_MAX_PLAYERS):
+            TriggerRegisterPlayerUnitEvent(t, Player(i), EVENT_PLAYER_UNIT_DAMAGED, None)
+        TriggerAddAction(t, Unit._damaged)
+        t = CreateTrigger()
+        for i in range(bj_MAX_PLAYERS):
+            TriggerRegisterPlayerUnitEvent(t, Player(i), EVENT_PLAYER_UNIT_DAMAGING, None)
+        TriggerAddAction(t, Unit._damaging)
     # manual properties
 
+    # BE CAREFUL: ASYNCHRONOUS
+    @property
+    def select(self):
+        return IsUnitSelected(self._handle,GetLocalPlayer())
+    @select.setter
+    def select(self,flag):
+        SelectUnit(self._handle,flag)
+    # END OF ASYNCHRONOUS
+
+    @property
+    def invulnerable(self):
+        return BlzIsUnitInvulnerable(self._handle)
+    @invulnerable.setter
+    def invulnerable(self,flag):
+        SetUnitInvulnerable(self._handle,flag)
+
+    @property
+    def food_made(self):
+        return GetUnitFoodMade(self._handle)
+    
     @property
     def life(self):
         return GetWidgetLife(self._handle)
@@ -400,8 +592,23 @@ class Unit(Handle):
         SetUnitLookAt(self._handle,bone,self._handle,x*100,y*100,z*100)
 
 
+    # get unit functions
+    @staticmethod
+    def get_attacker():
+        return Handle.get(GetAttacker()) or Unit(GetAttacker)
+
+    @staticmethod
+    def get_rescuer():
+        return Handle.get(GetRescuer()) or Unit(GetRescuer)
+
+    @staticmethod
+    def get_damage_source():
+        return Handle.get(GetEventDamageSource()) or Unit(GetEventDamageSource)
+
 
     # Automatically generated get unit functions
+
+
     @staticmethod
     def get_filter():
         return Handle.get(GetFilterUnit()) or Unit(GetFilterUnit)
@@ -626,3 +833,6 @@ class Unit(Handle):
     @skin.setter
     def skin(self, skinId):
         BlzSetUnitSkin(self._handle, skinId)
+
+
+AddScriptHook(Unit._make_triggers, CONFIG_AFTER)

@@ -4,7 +4,7 @@ from std.index import *
 # from lib.point import *
 # from lib.vector3 import *
 # from df.test import *
-from lib.particle import *
+# from lib.particle import *
 # from lib.itimer import *
 
 from std.unit import *
@@ -28,16 +28,26 @@ from std.unit import *
 # def createParticle(t):
 #     p = Bullet(0,0,128)
 #     ITimer.start(0.02, createParticle)
-class pu(Particle):
-    def on_terrainhit(self):
-        self.velocity = self.velocity.reflect(Vector3.terrain_normal(self.position.x, self.position.y))
+# class pu(Particle):
+#     def on_terrainhit(self):
+#         self.velocity = self.velocity.reflect(Vector3.terrain_normal(self.position.x, self.position.y))
+
+class un(Unit):
+    def on_death(self):
+        print(self.name,'dying')
+    def on_damaging(self,target):
+        print(self.name,'damaging',target.name)
+    def on_damaged(self,source):
+        print(self.name,'damaged by',source.name)
+
 def test():
-    u = Unit(0, "hfoo", 0, 0)
+
+    u = un(0, "hfoo", 0, 0)
 
     u.weapon(0).damage_tuple = [50,6,2]
-    u.name = "unit1"
+    u.name = "unit footy"
     u.max_hp = 1000
-    u.life = 500
+    u.life = 5
     u.max_mana = 100
     u.mana = 50
     u.ability("Amrf").add().remove()
@@ -49,8 +59,10 @@ def test():
     u.player_color(5)
     print(u.type)
 
-    p = pu(u,Vector3(-250,-250,1000))
-    p.forces.append(G)
+
+
+    # p = pu(u,Vector3(-250,-250,1000))
+    # p.forces.append(G)
 
     # ITimer.start(1, createParticle)
     # ITimer.start(3, createParticle)
