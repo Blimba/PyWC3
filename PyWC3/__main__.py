@@ -3,7 +3,7 @@ from PyWC3 import Map
 import sys
 import os
 import json
-
+from __version__ import __version__ as version
 def create_arg_parser():
     """Create and initialize an argument parser object"""
     parser = ArgumentParser(description="Python Warcraft III Mapscript Generator.")
@@ -29,7 +29,7 @@ def create_arg_parser():
 def main():
     """Entry point function to the translator"""
     # with open("setup.py")
-    print("PyWC3 version 1.0.0 by Bart Limburg\n")
+    print("PyWC3 version {} by Bart Limburg\n".format(version))
     try:
         with open("config.json","r") as f:
             cfg = json.load(f)

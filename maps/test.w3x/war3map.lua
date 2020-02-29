@@ -29,7 +29,7 @@ function Trig_Melee_Initialization_Actions()
     FogMaskEnableOff()
     SetUnitPositionLoc(gg_unit_hpea_0000, GetRectCenter(GetPlayableMapRect()))
     BlzSetUnitBaseDamage(gg_unit_hpea_0000, 50, 0)
-    SetUnitLookAt(gg_unit_hpea_0000, "bone_chest", gg_unit_hpea_0000, 0, 0, 90)
+    AddUnitAnimationPropertiesBJ(true, "gold", gg_unit_hpea_0000)
 end
 
 function InitTrig_Melee_Initialization()

@@ -105,12 +105,12 @@ class UnitInventory:
         for i in range(self._size):
             self._items.append(UnitItemInSlot(self._unit._handle, i))
 
-    def __getitem__(self, item):
+    def get(self,item):
         if isinstance(item, int) and item < self._size:
             return self._items[item]
         return None
 
-    def __setitem__(self, key, value):
+    def set(self, key, value):
         if isinstance(key, int) and key < self._size:
             UnitAddItemToSlotById(value)
 
@@ -177,10 +177,7 @@ class UnitWeapon:
 class UnitAbility:
     def __init__(self,unit,id):
         self.parent = unit
-        if isinstance(id,str):
-            self.id = FourCC(id)
-        else:
-            self.id = id
+        self.id = FourCC(id) if isinstance(id,str) else id
         # self.ability = BlzGetUnitAbility(self._handle, self.id)
         # print(self.ability)
 
@@ -255,7 +252,7 @@ class Unit(Handle):
 
     # use classes for indexed / id'd things
     # e.g.:
-    # abil = unitinstance.ability(FourCC('A001'))
+    # abil = unitinstance.ability('A001')
     # abil.level = 3
     # abil.cooldown = 2.5
     def ability(self,id):
@@ -377,12 +374,30 @@ class Unit(Handle):
     def is_loaded(self):
         IsUnitLoaded(self._handle)
 
-    def animate(self,animation):
+    def is_selectable(self):
+        BlzIsUnitSelectable(self._handle)
+
+    def animate(self,animation,rarity=None):
         if isinstance(animation,str):
-            SetUnitAnimation(self._handle, animation)
+            if rarity != None:
+                SetUnitAnimationWithRarity(self._handle, animation, rarity)
+            else:
+                SetUnitAnimation(self._handle, animation)
         elif isinstance(animation, int):
             SetUnitAnimationByIndex(self._handle, animation)
 
+    def queue_animation(self,animation):
+        QueueUnitAnimation(self._handle,animation)
+
+    def add_animation_properties(self,properties,add=True):
+        AddUnitAnimationProperties(self._handle, properties, add)
+    def remove_animation_properties(self,properties,remove=True):
+        AddUnitAnimationProperties(self._handle, properties, not remove)
+
+    def rescuable(self, byWhichPlayer, flag=True, range=0.0):
+        SetUnitRescuable(self._handle, byWhichPlayer, flag)
+        if range > 0:
+            SetUnitRescueRange(self._handle,range)
     # triggering
     @staticmethod
     def _death():
@@ -591,6 +606,8 @@ class Unit(Handle):
     def look_along(self,x,y,z,bone="bone_chest"):
         SetUnitLookAt(self._handle,bone,self._handle,x*100,y*100,z*100)
 
+    def reset_look(self):
+        ResetUnitLookAt(self._handle)
 
     # get unit functions
     @staticmethod
