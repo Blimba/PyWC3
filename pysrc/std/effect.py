@@ -52,7 +52,7 @@ class Effect(Handle):
 
     @scale.setter
     def scale(self, scale):
-        BlzSetSpecialEffectScale(self._handle, x)
+        BlzSetSpecialEffectScale(self._handle, scale)
 
     def set_matrix_scale(self, x, y, z):
         BlzSetSpecialEffectMatrixScale(self._handle, x, y, z)
