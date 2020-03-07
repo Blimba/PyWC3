@@ -16,7 +16,9 @@ class Handle:
 
     @staticmethod
     def get(handle):
-        return Handle.handles[handle]
+        if handle in Handle.handles:
+            return Handle.handles[handle]
+        return None
 
     def lose(self):
         del Handle.handles[self._handle]
