@@ -1,11 +1,20 @@
 # PyWC3 - Python for Warcraft III
+PyWC3 is a comprehensive method for Warcraft III modding using python. The code is translated to lua but allows us to 
+ use the more modern features of python (for specifics see [pythonlua](http://www.github.com/Blimba/python-lua/)). 
+ Summary of features (when using advised software):
+ - Code Completion
+ - Support for maps as "folders" as well as "mpq"
+ - Quick maptesting through command line interface
+ - Expanding list of modules in the standard library (I welcome people to develop missing modules by pull requests!)
+ 
 ## Requirements
 - Python 3.7 or higher.
 - [pythonlua](http://www.github.com/Blimba/python-lua/) version 1.2.0 or higher 
 ## Setting up
 It is highly recommended to install python using a distribution such as 
 [Anaconda](https://www.anaconda.com/distribution/), which comes preinstalled with packages required by this project
-(except pythonlua, which you will need to install manually). 
+(except pythonlua, which you will need to install manually). For code completion, I advise using a modern IDE such as 
+[PyCharm](https://www.jetbrains.com/pycharm/). 
 In addition, you will be able to use IPython, which is one way of quickly building and testing custom Warcraft III maps 
 created with this project. Please make sure that the python program is accessible in the `PATH` variable 
 ([how?](https://geek-university.com/python/add-python-to-the-windows-path/)).
@@ -19,6 +28,8 @@ would, go to `Scenario > Map Options` and set `Scripting Language` to Lua. Save 
 `Warcraft III Scenario Folder (- Expansion)` as the format. Save this map to the `maps/` folder. Alternatively,
 you can use the `Warcraft III Scenario (- Expansion)` (MPQ) format as long as you have the 
 [MPQEDitor.exe](http://www.zezula.net/en/mpq/download.html) in the `mpqeditor` folder.
+
+
 ### config.json  
 
 The config.json file contains file references used by the project. It has the general structure:  
@@ -101,6 +112,7 @@ m.generate_python_source()
 m.generate_definitions_file()
 ```
 The methods on the Map() object are explained above.
+
 ## jass translate
 
 Whenever a new Warcraft III is released, we should update our function / constant defintions. 
@@ -114,6 +126,17 @@ without supplying a map filename to the script. Alternatively, in IPython, run:
 ```python
 Jass.convert_all()
 ```
+# Code completion
+A very important part of modern programming is to have access to code completion. The translated jass code explained 
+above is available to include in python only for code completion (obviously the functionality only exists within wc3).
+To make code completion work, we have to include the translated definitions files into our python script:
+```python
+from df.commonj import *
+from df.blizzardj import *
+from df.commonai import *
+```
+After these three lines of code have been added to our project, our code completion will work in modern IDEs, such as
+for example [PyCharm](https://www.jetbrains.com/pycharm/).
 
 # Coding Features
 - Hooking user functions to the mapscript by using `AddScriptHook(func, where)` where `where` can be CONFIG_BEFORE, 
