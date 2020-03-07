@@ -105,8 +105,8 @@ class PlayerUnitEvent(Handle):
         for arg in self.args:
             if callable(arg):
                 nargs.append(arg())
-        if callable(nargs[0][self.callback]):
-            try: nargs[0][self.callback](*(nargs))
+        if callable(getattr(nargs[0],self.callback)):
+            try: getattr(nargs[0],self.callback)(*nargs)
             except: print(Error)
 
     def __init__(self, playerunitevent, callback, *args):
