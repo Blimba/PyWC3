@@ -97,6 +97,30 @@ SetUnitCreepGuard
 BlzGetLocalUnitZ
 """
 
+class PlayerUnitEvent(Handle):
+    @staticmethod
+    def _triggered():
+        self = Handle.get(GetTriggeringTrigger())
+        nargs = []
+        for arg in self.args:
+            if callable(arg):
+                nargs.append(arg())
+        if callable(nargs[0][self.callback]):
+            try: nargs[0][self.callback](*(nargs))
+            except: print(Error)
+
+    def __init__(self, playerunitevent, callback, *args):
+        Handle.__init__(self,CreateTrigger)
+        self.callback = callback
+        self.args = args  # these are the event units that should be called!
+        for playerid in range(bj_MAX_PLAYERS):
+            if type(playerunitevent) == list:
+                for pue in playerunitevent:
+                    TriggerRegisterPlayerUnitEvent(self._handle, Player(playerid), pue, None)
+            else:
+                TriggerRegisterPlayerUnitEvent(self._handle, Player(playerid), playerunitevent, None)
+        TriggerAddAction(self._handle, PlayerUnitEvent._triggered)
+
 class UnitInventory:
     def __init__(self,unit):
         self._items = []
@@ -400,67 +424,14 @@ class Unit(Handle):
             SetUnitRescueRange(self._handle,range)
     # triggering
     @staticmethod
-    def _death():
-        self = Unit.get_dying()
-        if callable(self.on_death):
-            self.on_death()
+    def _make_events():
+        PlayerUnitEvent(EVENT_PLAYER_UNIT_DEATH, "on_death", Unit.get_dying)
+        PlayerUnitEvent(EVENT_PLAYER_UNIT_ATTACKED, "on_attacked", Unit.get_trigger, Unit.get_attacker)
+        PlayerUnitEvent(EVENT_PLAYER_UNIT_DAMAGED, "on_damaged", Unit.get_trigger, Unit.get_damage_source)
+        PlayerUnitEvent(EVENT_PLAYER_UNIT_DAMAGING, "on_damaging", Unit.get_damage_source, Unit.get_trigger)
+        PlayerUnitEvent([EVENT_PLAYER_UNIT_ISSUED_ORDER, EVENT_PLAYER_UNIT_ISSUED_POINT_ORDER], "on_ordered", Unit.get_ordered)
+        PlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_TARGET_ORDER, "on_ordered", Unit.get_ordered, Unit.get_order_target)
 
-    @staticmethod
-    def _attacked():
-        self = Unit.get_trigger()
-        if callable(self.on_attacked):
-            self.on_attacked(Unit.get_attacker())
-
-    @staticmethod
-    def _ordered():
-        self = Unit.get_ordered()
-        if callable(self.on_ordered):
-            self.on_ordered()
-
-    @staticmethod
-    def _damaged():
-        self = Unit.get_trigger()
-        if callable(self.on_damaged):
-            self.on_damaged(Unit.get_damage_source())
-
-    @staticmethod
-    def _damaging():
-        self = Unit.get_damage_source()
-        if callable(self.on_damaging):
-            self.on_damaging(Unit.get_trigger())
-
-    @staticmethod
-    def _make_triggers():
-        # death
-        t = CreateTrigger()
-        for i in range(bj_MAX_PLAYERS):
-            TriggerRegisterPlayerUnitEvent(t, Player(i), EVENT_PLAYER_UNIT_DEATH, None)
-        TriggerAddAction(t, Unit._death)
-
-        # attacked
-        t = CreateTrigger()
-        for i in range(bj_MAX_PLAYERS):
-            TriggerRegisterPlayerUnitEvent(t, Player(i), EVENT_PLAYER_UNIT_ATTACKED, None)
-        TriggerAddAction(t, Unit._attacked)
-
-        # orders
-        t = CreateTrigger()
-        for i in range(bj_MAX_PLAYERS):
-            TriggerRegisterPlayerUnitEvent(t, Player(i), EVENT_PLAYER_UNIT_ISSUED_ORDER, None)
-            TriggerRegisterPlayerUnitEvent(t, Player(i), EVENT_PLAYER_UNIT_ISSUED_POINT_ORDER, None)
-            TriggerRegisterPlayerUnitEvent(t, Player(i), EVENT_PLAYER_UNIT_ISSUED_TARGET_ORDER, None)
-            TriggerRegisterPlayerUnitEvent(t, Player(i), EVENT_PLAYER_UNIT_ISSUED_UNIT_ORDER, None)
-        TriggerAddAction(t, Unit._ordered)
-
-        #damage
-        t = CreateTrigger()
-        for i in range(bj_MAX_PLAYERS):
-            TriggerRegisterPlayerUnitEvent(t, Player(i), EVENT_PLAYER_UNIT_DAMAGED, None)
-        TriggerAddAction(t, Unit._damaged)
-        t = CreateTrigger()
-        for i in range(bj_MAX_PLAYERS):
-            TriggerRegisterPlayerUnitEvent(t, Player(i), EVENT_PLAYER_UNIT_DAMAGING, None)
-        TriggerAddAction(t, Unit._damaging)
     # manual properties
 
     # BE CAREFUL: ASYNCHRONOUS
@@ -851,5 +822,4 @@ class Unit(Handle):
     def skin(self, skinId):
         BlzSetUnitSkin(self._handle, skinId)
 
-
-AddScriptHook(Unit._make_triggers, CONFIG_AFTER)
+AddScriptHook(Unit._make_events, CONFIG_AFTER)

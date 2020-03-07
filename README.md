@@ -1,7 +1,7 @@
 # PyWC3 - Python for Warcraft III
 ## Requirements
 - Python 3.7 or higher.
-- [pythonlua](http://www.github.com/Blimba/python-lua/) version 1.0.0 or higher 
+- [pythonlua](http://www.github.com/Blimba/python-lua/) version 1.2.0 or higher 
 ## Setting up
 It is highly recommended to install python using a distribution such as 
 [Anaconda](https://www.anaconda.com/distribution/), which comes preinstalled with packages required by this project
