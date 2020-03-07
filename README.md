@@ -2,7 +2,7 @@
 PyWC3 is a comprehensive method for Warcraft III modding using python. The code is translated to lua but allows us to 
  use the more modern features of python (for specifics see [pythonlua](http://www.github.com/Blimba/python-lua/)). 
  Summary of features (when using advised software):
- - Code Completion
+ - Code Completion & Syntax highlighting of your favourite IDE
  - Support for maps as "folders" as well as "mpq"
  - Quick maptesting through command line interface
  - Expanding list of modules in the standard library (I welcome people to develop missing modules by pull requests!)
