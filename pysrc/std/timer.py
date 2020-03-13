@@ -8,6 +8,7 @@ class Timer(Handle):
 
     def __gc__(self):
         # currently this never runs
+        print('timer gc',self._handle,self.get_elapsed())
         self.destroy()
 
     def start(self,time,callback):
@@ -21,8 +22,7 @@ class Timer(Handle):
 
     @staticmethod
     def get_expired():
-        t = Handle.handles[GetExpiredTimer()]
-        return t
+        return Handle.get(GetExpiredTimer())
 
     def pause(self):
         PauseTimer(self._handle)

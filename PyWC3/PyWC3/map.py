@@ -67,7 +67,7 @@ class Map:
             raise Exception("Mapfile {} not found!".format(os.path.join(self.cfg['MAP_FOLDER'], self.file)))
 
     def translate_file(self, file):
-        print("> Translating file {}...".format(file))
+        # print("> Translating file {}...".format(file))
         with open(file, "r") as f:
             content = "".join(f.readlines())
         content = re.sub("^import (.+)$", "", content, flags=re.MULTILINE)
@@ -84,32 +84,29 @@ class Map:
                 if i not in rl:
                     rl.append(i)
             return rl
-        filelst = unique(flatten(lst))[::-1]
-        nfilelst = filelst.copy()
-
+        nfilelst = unique(flatten(lst))
         try:
             while isinstance(lst[0][0],list):
                 lst = lst[0]
         except:
             pass
-
-        for file1 in filelst:
-            for unp in lst:
-                file2 = unp[0]
-                try:
-                    sub = unp[1:]
-                except:
-                    sub = []
-                if file1 != file2:
-                    if file1 in flatten(sub):
-                        i1 = nfilelst.index(file1)
-                        i2 = nfilelst.index(file2)
+        def iterator(lvl,lst,parents):
+            for item in lst:
+                if isinstance(item,str):
+                    for parent in parents:
+                        i1 = nfilelst.index(item)
+                        i2 = nfilelst.index(parent)
                         if i1 > i2:
                             nfilelst[i1], nfilelst[i2] = nfilelst[i2], nfilelst[i1]
+                    parents.append(item)
+                elif isinstance(item,list):
+                    iterator(lvl+">",item,parents.copy())
+        for i in lst:
+            iterator('',i,[])
         return nfilelst
 
     def get_dependencies(self, file, exclude=True):
-        print("> Reading file {}...".format(file))
+        # print("> Reading file {}...".format(file))
         try:
             with open(file, "r") as f:
                 lst = []
@@ -137,7 +134,8 @@ class Map:
                             lst[-1].append(d)
 
         except FileNotFoundError:
-            print("WARNING: cannot find python source file {}".format(file))
+            if 'math' not in file:
+                print("WARNING: cannot find python source file {}".format(file))
         # try: print(lst)
         # except: pass
         try: return lst
@@ -177,12 +175,12 @@ class Map:
             for file in self.import_tree_to_list(self.get_dependencies(os.path.join(self.cfg['PYTHON_SOURCE_FOLDER'], "{}.py".format(filename)))):
                 f.write("-- Imported module {}\n".format(file))
                 f.write(self.translate_file(file))
-                print("> Appended file {}.".format(file))
+                print("> Appended translated file {}.".format(file))
                 f.write("\n")
             # write
             f.write("-- Main map code\n")
             f.write(self.translate_file(os.path.join(self.cfg['PYTHON_SOURCE_FOLDER'], "{}.py".format(filename))))
-            print("> Appended file {}.".format(os.path.join(self.cfg['PYTHON_SOURCE_FOLDER'], "{}.py".format(filename))))
+            print("> Appended translated file {}.".format(os.path.join(self.cfg['PYTHON_SOURCE_FOLDER'], "{}.py".format(filename))))
         print("Build completed.")
 
     def build(self):

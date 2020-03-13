@@ -822,4 +822,4 @@ class Unit(Handle):
     def skin(self, skinId):
         BlzSetUnitSkin(self._handle, skinId)
 
-AddScriptHook(Unit._make_events, CONFIG_AFTER)
+AddScriptHook(Unit._make_events, MAIN_BEFORE)

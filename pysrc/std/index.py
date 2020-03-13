@@ -1,5 +1,4 @@
 from .compatibility import *
-from .handle import *
 
 MAIN_BEFORE = "main::before"
 MAIN_AFTER = "main::after"

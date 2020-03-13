@@ -1,3 +1,4 @@
+gg_cam_Camera_001 = nil
 gg_trg_Melee_Initialization = nil
 gg_unit_hpea_0000 = nil
 function InitGlobals()
@@ -9,7 +10,7 @@ function CreateUnitsForPlayer0()
     local unitID
     local t
     local life
-    gg_unit_hpea_0000 = BlzCreateUnitWithSkin(p, FourCC("hpea"), -257.9, -273.7, 259.571, FourCC("hpea"))
+    u = BlzCreateUnitWithSkin(p, FourCC("hpea"), -1.0, -0.6, 259.571, FourCC("hpea"))
 end
 
 function CreatePlayerBuildings()
@@ -24,12 +25,25 @@ function CreateAllUnits()
     CreatePlayerUnits()
 end
 
+function CreateCameras()
+    gg_cam_Camera_001 = CreateCameraSetup()
+    CameraSetupSetField(gg_cam_Camera_001, CAMERA_FIELD_ZOFFSET, 0.0, 0.0)
+    CameraSetupSetField(gg_cam_Camera_001, CAMERA_FIELD_ROTATION, 62.7, 0.0)
+    CameraSetupSetField(gg_cam_Camera_001, CAMERA_FIELD_ANGLE_OF_ATTACK, 313.7, 0.0)
+    CameraSetupSetField(gg_cam_Camera_001, CAMERA_FIELD_TARGET_DISTANCE, 1650.0, 0.0)
+    CameraSetupSetField(gg_cam_Camera_001, CAMERA_FIELD_ROLL, 0.0, 0.0)
+    CameraSetupSetField(gg_cam_Camera_001, CAMERA_FIELD_FIELD_OF_VIEW, 70.0, 0.0)
+    CameraSetupSetField(gg_cam_Camera_001, CAMERA_FIELD_FARZ, 5000.0, 0.0)
+    CameraSetupSetField(gg_cam_Camera_001, CAMERA_FIELD_NEARZ, 16.0, 0.0)
+    CameraSetupSetField(gg_cam_Camera_001, CAMERA_FIELD_LOCAL_PITCH, 0.0, 0.0)
+    CameraSetupSetField(gg_cam_Camera_001, CAMERA_FIELD_LOCAL_YAW, 0.0, 0.0)
+    CameraSetupSetField(gg_cam_Camera_001, CAMERA_FIELD_LOCAL_ROLL, 0.0, 0.0)
+    CameraSetupSetDestPosition(gg_cam_Camera_001, -108.8, -141.8, 0.0)
+end
+
 function Trig_Melee_Initialization_Actions()
     FogEnableOff()
     FogMaskEnableOff()
-    SetUnitPositionLoc(gg_unit_hpea_0000, GetRectCenter(GetPlayableMapRect()))
-    BlzSetUnitBaseDamage(gg_unit_hpea_0000, 50, 0)
-    AddUnitAnimationPropertiesBJ(true, "gold", gg_unit_hpea_0000)
 end
 
 function InitTrig_Melee_Initialization()
@@ -64,6 +78,7 @@ function main()
     SetAmbientDaySound("LordaeronSummerDay")
     SetAmbientNightSound("LordaeronSummerNight")
     SetMapMusic("Music", true, 0)
+    CreateCameras()
     CreateAllUnits()
     InitBlizzard()
     InitGlobals()
@@ -77,7 +92,7 @@ function config()
     SetPlayers(1)
     SetTeams(1)
     SetGamePlacement(MAP_PLACEMENT_USE_MAP_SETTINGS)
-    DefineStartLocation(0, -64.0, -128.0)
+    DefineStartLocation(0, 0.0, 0.0)
     InitCustomPlayerSlots()
     SetPlayerSlotAvailable(Player(0), MAP_CONTROL_USER)
     InitGenericPlayerSlots()
