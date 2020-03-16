@@ -1,28 +1,6 @@
 gg_cam_Camera_001 = nil
 gg_trg_Melee_Initialization = nil
-gg_unit_hpea_0000 = nil
 function InitGlobals()
-end
-
-function CreateUnitsForPlayer0()
-    local p = Player(0)
-    local u
-    local unitID
-    local t
-    local life
-    u = BlzCreateUnitWithSkin(p, FourCC("hpea"), -1.0, -0.6, 259.571, FourCC("hpea"))
-end
-
-function CreatePlayerBuildings()
-end
-
-function CreatePlayerUnits()
-    CreateUnitsForPlayer0()
-end
-
-function CreateAllUnits()
-    CreatePlayerBuildings()
-    CreatePlayerUnits()
 end
 
 function CreateCameras()
@@ -63,12 +41,31 @@ function InitCustomPlayerSlots()
     SetPlayerStartLocation(Player(0), 0)
     SetPlayerColor(Player(0), ConvertPlayerColor(0))
     SetPlayerRacePreference(Player(0), RACE_PREF_HUMAN)
-    SetPlayerRaceSelectable(Player(0), true)
+    SetPlayerRaceSelectable(Player(0), false)
     SetPlayerController(Player(0), MAP_CONTROL_USER)
+    SetPlayerStartLocation(Player(1), 1)
+    SetPlayerColor(Player(1), ConvertPlayerColor(1))
+    SetPlayerRacePreference(Player(1), RACE_PREF_ORC)
+    SetPlayerRaceSelectable(Player(1), false)
+    SetPlayerController(Player(1), MAP_CONTROL_USER)
 end
 
 function InitCustomTeams()
     SetPlayerTeam(Player(0), 0)
+    SetPlayerState(Player(0), PLAYER_STATE_ALLIED_VICTORY, 1)
+    SetPlayerTeam(Player(1), 0)
+    SetPlayerState(Player(1), PLAYER_STATE_ALLIED_VICTORY, 1)
+    SetPlayerAllianceStateAllyBJ(Player(0), Player(1), true)
+    SetPlayerAllianceStateAllyBJ(Player(1), Player(0), true)
+    SetPlayerAllianceStateVisionBJ(Player(0), Player(1), true)
+    SetPlayerAllianceStateVisionBJ(Player(1), Player(0), true)
+end
+
+function InitAllyPriorities()
+    SetStartLocPrioCount(0, 1)
+    SetStartLocPrio(0, 0, 1, MAP_LOC_PRIO_HIGH)
+    SetStartLocPrioCount(1, 1)
+    SetStartLocPrio(1, 0, 0, MAP_LOC_PRIO_HIGH)
 end
 
 function main()
@@ -79,7 +76,6 @@ function main()
     SetAmbientNightSound("LordaeronSummerNight")
     SetMapMusic("Music", true, 0)
     CreateCameras()
-    CreateAllUnits()
     InitBlizzard()
     InitGlobals()
     InitCustomTriggers()
@@ -89,12 +85,13 @@ end
 function config()
     SetMapName("TRIGSTR_001")
     SetMapDescription("TRIGSTR_003")
-    SetPlayers(1)
-    SetTeams(1)
-    SetGamePlacement(MAP_PLACEMENT_USE_MAP_SETTINGS)
+    SetPlayers(2)
+    SetTeams(2)
+    SetGamePlacement(MAP_PLACEMENT_TEAMS_TOGETHER)
     DefineStartLocation(0, 0.0, 0.0)
+    DefineStartLocation(1, 0.0, 0.0)
     InitCustomPlayerSlots()
-    SetPlayerSlotAvailable(Player(0), MAP_CONTROL_USER)
-    InitGenericPlayerSlots()
+    InitCustomTeams()
+    InitAllyPriorities()
 end
 

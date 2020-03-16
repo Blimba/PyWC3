@@ -1,71 +1,54 @@
+from df.commonj import *
+from df.test import *
 from std.index import *
-# from std.timer import Timer
-# from std.effect import Effect
-# from lib.point import *
-# from lib.vector3 import *
-# from df.test import *
-# from lib.particle import *
-# from lib.itimer import *
+from lib.click_plane import *
+from lib.unitphysics import *
 
-from std.unit import *
-
-# class Bullet(Particle):
-#     def __init__(self,x,y,z):
-#         Particle.__init__(
-#             self,
-#             Effect(x, y, z, r"Abilities\\Weapons\\CannonTowerMissile\\CannonTowerMissile.mdl"),
-#             Vector3((math.random()-0.5)*500,(math.random()-0.5)*500,1000*(math.random()+0.5))
-#         )
-#         self.collision_sampling = 1
-#         self.forces.append(G)
-#         self.timeout = 3
-#     def on_terrainhit(self):
-#         self.velocity = self.velocity.reflect(Vector3.terrain_normal(self.position.x,self.position.y))*0.6
 #
-#     def on_unithit(self,u):
-#         self.destroy()
+# class testc:
+#     o = None
+#     def __new__(cls):
+#         if testc.o == None:
+#             testc.o = object.__new__()
+#         return testc.o
 #
-# def createParticle(t):
-#     p = Bullet(0,0,128)
-#     ITimer.start(0.02, createParticle)
-# class pu(Particle):
-#     def on_terrainhit(self):
-#         self.velocity = self.velocity.reflect(Vector3.terrain_normal(self.position.x, self.position.y))
+# def c():
+#     for i in range(100):
+#         testc()
+#
+#
+# def test():
+#     TimerStart(CreateTimer(),0.01,True,c)
 
-class un(Unit):
-    def on_death(self):
-        print(self.name,'dying')
-    def on_damaging(self,target):
-        print(self.name,'damaging',target.name)
-    def on_damaged(self,source):
-        print(self.name,'damaged by',source.name)
+class FloatingPlatform(Box):
+    def __init__(self,x,y,z):
+        Box.__init__(self, x-64, y-64, z-80, x+64, y+64, z)
+        self.clickplane = ClickPlane(x-64, y-64, x+64, y+64, z)
+        self.fx = Effect(x,y,z,r"Doodads\\Cinematic\\FootSwitch\\FootSwitch.mdl")
+        # self.fx.clear_sub_animations()
+        # self.fx.add_sub_animation(SUBANIM_TYPE_ALTERNATE_EX)
+        self.fx.animate(ANIM_TYPE_DEATH)
+
 
 def test():
-
-    u = un(0, "hfoo", 0, 0)
-
-    u.weapon(0).damage_tuple = [50,6,2]
-    u.name = "unit footy"
-    u.max_hp = 1000
-    u.life = 5
-    u.max_mana = 100
-    u.mana = 50
-    u.ability("Amrf").add().remove()
-    abil = u.ability("Adef")
-    print(abil.level)
-    abil.remove()
-    print(u.name)
-    u.color(50,100,150)
-    u.player_color(5)
-    print(u.type)
-
-
-
-    # p = pu(u,Vector3(-250,-250,1000))
-    # p.forces.append(G)
-
-    # ITimer.start(1, createParticle)
-    # ITimer.start(3, createParticle)
-
+    offset = [576,0,140]
+    mult = [128,128,35]
+    lst = [
+        Vector3(0, 0, 0),
+        Vector3(0, 1, 1),
+        Vector3(0, 2, 2),
+        Vector3(-1, 2, 3),
+        Vector3(-2, 2, 4),
+        Vector3(-2, 1, 5),
+        Vector3(-2, 0, 6),
+        Vector3(-1, 0, 7),
+        Vector3(0, 0, 8),
+    ]
+    for v in lst:
+        Particle.collidables.append(FloatingPlatform(v.x*mult[0]+offset[0],v.y*mult[1]+offset[1],v.z*mult[2]+offset[2]))
+    for i in range(2):
+        PhysicsUnit(0,'hfoo', 0,0)
+    for i in range(2):
+        PhysicsUnit(1,'hfoo', 0,0)
 
 AddScriptHook(test,MAIN_AFTER)

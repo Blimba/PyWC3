@@ -187,5 +187,8 @@ class EventUnit(Unit):
 
 u2 = EventUnit(0, "hpea", 128, 0)  # create a unit with an on_death event
 u2.on_ordered = lambda self: print(self.name, "has been ordered")  # add an event for ordering
-
 ```
+
+# Lib folder
+The `lib` folder in `pysrc` has been filled with some libraries. These are undocumented and might be rather specific.
+Use them at your own risk.
