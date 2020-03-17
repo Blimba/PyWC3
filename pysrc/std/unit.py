@@ -561,7 +561,7 @@ class Unit(Handle):
 
     @property
     def z(self):
-        return BlzGetUnitZ(self._handle)
+        return BlzGetUnitZ(self._handle)+GetUnitFlyHeight(self._handle)
 
     @z.setter
     def z(self, z):

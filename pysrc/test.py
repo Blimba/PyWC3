@@ -47,8 +47,8 @@ def test():
     for v in lst:
         Particle.collidables.append(FloatingPlatform(v.x*mult[0]+offset[0],v.y*mult[1]+offset[1],v.z*mult[2]+offset[2]))
     for i in range(2):
-        PhysicsUnit(0,'hfoo', 0,0)
-    for i in range(2):
-        PhysicsUnit(1,'hfoo', 0,0)
+        PhysicsUnit(0,'hfoo', -100*i,0)
+    # for i in range(2):
+    #     PhysicsUnit(1,'hfoo', 0,-100*i)
 
 AddScriptHook(test,MAIN_AFTER)

@@ -20,12 +20,14 @@ class PhysicsUnit(Unit,Particle):
     def __init__(self,playerid,unitid,x,y,face=0.0,skinid=0):
         Unit.__init__(self,playerid,unitid,x,y,face,skinid)
         Particle.__init__(self,self,Vector3(0,0,0),10,False,1,BlzGetUnitCollisionSize(self._handle))
+        # assert (isinstance(self.obj, Unit))
         UnitAddAbility(self._handle,FourCC('Amrf'))
         UnitRemoveAbility(self._handle,FourCC('Amrf'))
         self.forces.append(G)
         self.height = 90
         self._terrain_flag = False
         self.default_move_speed = self.obj.move_speed
+        self.obj.pathing(False)
 
     def on_walk_terrainhit(self,wv,pv):
         self.position.subtract(wv * (3 / (1 + math.exp((pv.z + 45)/5))))
@@ -40,12 +42,19 @@ class PhysicsUnit(Unit,Particle):
         if impulse > 0:
             impulse = 1.05 / (1+math.exp((-impulse+200)/75.))
             self.obj.life = self.obj.life - impulse * self.obj.max_hp
-
-
-
         self.velocity.subtract(prv)  # impulse normal penetration to velocity
         friction = self.velocity * -0.8  # apply friction of the terrain to the unit velocity
         self.velocity.add(friction)
+
+    def on_unithit(self,u):
+        z = u.z
+        if IsUnitInRangeXY(u._handle, self.position.x, self.position.y, self.size) and self.position.z > (z - self.height) and self.position.z < (z + 90):
+            if len(self.walking_velocity) > 1:
+                pv = self.position - Vector3(u.x, u.y, self.position.z,True)
+                l = len(pv)
+                pv = pv
+                v = pv*(1-(self.size + u.collision_size) / l)
+                self.position.subtract(v)
 
 
     def on_grounded(self):
@@ -54,7 +63,7 @@ class PhysicsUnit(Unit,Particle):
     def on_airborn(self):
         self.obj.move_speed = 0.0
         # fall in the direction he was going
-        self.velocity.add(self.walking_velocity * (self.collision_sampling / PARTICLE_PERIOD))
+        self.velocity.add(self.walking_velocity * (self.collision_sampling / Particle.period))
 
     def update(self):
         self._onterrain = False

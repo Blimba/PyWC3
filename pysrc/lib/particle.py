@@ -3,9 +3,7 @@ from ..std.effect import *
 from ..std.index import *
 from .cyclist import *
 from ..std.timer import *
-PARTICLE_PERIOD = 0.01
-PARTICLE_MAX_SIZE = 128
-
+from ..std.unit import *
 class Force(Vector3):
     def __init__(self,x,y,z):
         self.active = True
@@ -28,7 +26,8 @@ class Particle(Cyclist):
     _start = None
     _group = None
     collidables = []
-
+    period = 0.01
+    max_size = 128
     def __gc__(self):
         print('freeing',self)
 
@@ -55,6 +54,8 @@ class Particle(Cyclist):
         self.dead = False
         self.collision_sampling = collision_sampling
         self.size = size
+        if size > Particle.max_size:
+            Particle.max_size = size
         self.timeout = None
         self.on_unithit = None
         self.on_terrainhit = None
@@ -89,9 +90,9 @@ class Particle(Cyclist):
                 self.forces.remove(force)
                 continue
             # apply the force to the velocity based on its calculated force vector on the particle.
-            self.velocity.add(force.calculate(self) * (PARTICLE_PERIOD / self.mass))
+            self.velocity.add(force.calculate(self) * (Particle.period / self.mass))
         # do multisample collision
-        r = PARTICLE_PERIOD / self.collision_sampling
+        r = Particle.period / self.collision_sampling
         v = self.velocity * r
         for i in range(self.collision_sampling):
             self.position.add(v)
@@ -110,26 +111,27 @@ class Particle(Cyclist):
                         v = self.velocity * r  # could have changed during terrain collision!
                         self.position.add(v)
             if callable(self.on_unithit):
-                GroupEnumUnitsInRange(Particle._group, self.position.x, self.position.y, self.size+PARTICLE_MAX_SIZE, None)
+                GroupEnumUnitsInRange(Particle._group, self.position.x, self.position.y, self.size+Particle.max_size, None)
                 # change to BlzGroupUnitAt? => yes, it is (sliiiightly) faster!
                 u = FirstOfGroup(Particle._group)
                 while(u != None):
-                    if not IsUnitType(u, UNIT_TYPE_DEAD) and IsUnitInRangeXY(u, self.position.x,self.position.y,self.size):
-                        z = BlzGetUnitZ(u)
-                        if self.position.z > z and self.position.z < (z+90):  # hardcoded unit height. Replace later!
-                            self.position.subtract(v)
-                            self.on_unithit(u)
-                            if self.dead == False:
-                                # certain weird things might cause a nan. Catch it and fix
-                                if self.velocity.x != self.velocity.x: self.velocity.x = 0
-                                if self.velocity.y != self.velocity.y: self.velocity.y = 0
-                                if self.velocity.z != self.velocity.z: self.velocity.z = 0
-                                v = self.velocity * r  # could have changed during unit hit!
-                                self.position.add(v)
+                    if self.obj != None and self.obj._handle != u:
+                        if not IsUnitType(u, UNIT_TYPE_DEAD) and IsUnitInRangeXY(u, self.position.x,self.position.y,self.size):
+                            z = BlzGetUnitZ(u)+GetUnitFlyHeight(u)
+                            if self.position.z > (z - self.height) and self.position.z < (z+90):  # hardcoded unit height. Replace later!
+                                self.position.subtract(v)
+                                self.on_unithit(Unit(u))
+                                if self.dead == False:
+                                    # certain weird things might cause a nan. Catch it and fix
+                                    if self.velocity.x != self.velocity.x: self.velocity.x = 0
+                                    if self.velocity.y != self.velocity.y: self.velocity.y = 0
+                                    if self.velocity.z != self.velocity.z: self.velocity.z = 0
+                                    v = self.velocity * r  # could have changed during unit hit!
+                                    self.position.add(v)
                     GroupRemoveUnit(Particle._group, u)
                     u = FirstOfGroup(Particle._group)
         # handle timing
-        self.time += PARTICLE_PERIOD
+        self.time += Particle.period
         if isinstance(self.timeout,float):
             if self.time >= self.timeout:
                 if callable(self.on_timeout):
@@ -165,7 +167,7 @@ class Particle(Cyclist):
             Particle._start = None
 
     @staticmethod
-    def period():
+    def _period():
         node = Particle._start
         while node != None:
             nnode = node.next
@@ -181,7 +183,8 @@ class Particle(Cyclist):
     @staticmethod
     def _Start():
         Particle._group = CreateGroup()
-        Timer().start(PARTICLE_PERIOD, Particle.period)
+        Particle.timer = Timer()
+        Particle.timer.start(Particle.period, Particle._period)
 
 
 AddScriptHook(Particle._Start,MAIN_BEFORE)
