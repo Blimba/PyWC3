@@ -201,7 +201,6 @@ class Map:
         spl = filename.split(".")
         if spl[-1] == 'w3m' or spl[-1] == 'w3x':
             filename = ".".join(spl[:-1])
-        print(src,dst)
         # write translated lua files
         with open(dst, "w") as f:
             # write map code
