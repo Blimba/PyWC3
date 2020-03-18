@@ -5,7 +5,7 @@ import re
 from pythonlua.translator import Translator
 import shutil
 import json
-
+from PyWC3.obj import ObjFile
 
 class Map:
     def __init__(self, file, **kwargs):
@@ -24,6 +24,7 @@ class Map:
             self.translator = Translator(locals=['main', 'config'], show_ast=kwargs.get('show_ast',False))
         else:
             raise Exception("Mapfile {} not found!".format(os.path.join(os.getcwd(),self.cfg['MAP_FOLDER'], file)))
+        self.objfiles = {}
 
     def _print_sp(self,proc):
         output = []
@@ -66,14 +67,55 @@ class Map:
         else:
             raise Exception("Mapfile {} not found!".format(os.path.join(self.cfg['MAP_FOLDER'], self.file)))
 
+
+    def objeditor(self,c):
+        try: js = json.loads(c)
+        except json.decoder.JSONDecodeError as error: raise SystemError('Error in ObjEditor, error in json:\n{}'.format(error))
+        for file in js:
+            if not file in self.objfiles:
+                self.objfiles[file] = ObjFile(file)
+                try: self.objfiles[file].read(os.path.join(self.cfg['MAP_FOLDER'],self.file))
+                except FileNotFoundError: pass
+            for rawcode in js[file]:
+                try:
+                    ids = rawcode.split('>')
+                    old_id = ids[0]
+                    new_id = ids[-1]
+                except: raise SystemError('Error in ObjEditor, do not understand rawcode {}'.format(rawcode))
+                if new_id == old_id:
+                    old_id = 0
+                else:
+                    old_id = bytes(old_id, encoding='utf-8')
+                new_id = bytes(new_id,encoding='utf-8')
+                for mod in js[file][rawcode]:
+                    id = bytes(mod, encoding='utf-8')
+                    value = js[file][rawcode][mod]
+                    level = 0
+                    pointer = 0
+                    if isinstance(value,list):
+                        for ivalue in value:
+                            if isinstance(ivalue, dict):
+                                level = ivalue['level']
+                                pointer = ivalue['pointer']
+                                value = ivalue['value']
+                            self.objfiles[file].add_mod(new_id, id, ivalue, level, pointer, from_id=old_id)
+                    if isinstance(value,dict):
+                        level = value['level']
+                        pointer = value['pointer']
+                        value = value['value']
+                    self.objfiles[file].add_mod(new_id,id,value,level,pointer,from_id=old_id)
+
     def translate_file(self, file):
         # print("> Translating file {}...".format(file))
         with open(file, "r") as f:
             content = "".join(f.readlines())
         content = re.sub("^import (.+)$", "", content, flags=re.MULTILINE)
         content = re.sub("^from (.+) import (.+)*", "", content, flags=re.MULTILINE)
-        return self.translator.translate(
-            content)  # re.sub("local (.+) = require \"(.+)\"","",self.translator.translate(content))
+        for c in re.findall("\'{3}ObjEditor([\s\S]+?)\'{3}", content, flags=re.MULTILINE):
+            self.objeditor(c)
+        for c in re.findall("\"{3}ObjEditor([\s\S]+?)\"{3}", content, flags=re.MULTILINE):
+            self.objeditor(c)
+        return self.translator.translate(content)
 
 
     def import_tree_to_list(self,lst):
@@ -136,8 +178,6 @@ class Map:
         except FileNotFoundError:
             if 'math' not in file:
                 print("WARNING: cannot find python source file {}".format(file))
-        # try: print(lst)
-        # except: pass
         try: return lst
         except: return []
 
@@ -181,7 +221,7 @@ class Map:
             f.write("-- Main map code\n")
             f.write(self.translate_file(os.path.join(self.cfg['PYTHON_SOURCE_FOLDER'], "{}.py".format(filename))))
             print("> Appended translated file {}.".format(os.path.join(self.cfg['PYTHON_SOURCE_FOLDER'], "{}.py".format(filename))))
-        print("Build completed.")
+
 
     def build(self):
         # delete previous dist
@@ -234,9 +274,14 @@ class Map:
                 self.get_war3maplua(),
                 os.path.join(self.cfg['DIST_FOLDER'], self.file, "war3map.lua")
             )
+            for objfile in self.objfiles:
+                objf = self.objfiles[objfile]
+                print("> Building ObjFile {}...".format(objf.filename))
+                objf.write(os.path.join(self.cfg['DIST_FOLDER'], self.file))
+
         try: shutil.rmtree('temp')
         except: pass  # no problem
-
+        print("Build completed.")
 
 
     def generate_python_source(self):

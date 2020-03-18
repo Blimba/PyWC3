@@ -2,6 +2,7 @@
 PyWC3 is a comprehensive method for Warcraft III modding using python. The code is translated to lua but allows us to 
  use the more modern features of python (for specifics see [pythonlua](http://www.github.com/Blimba/python-lua/)). 
  Summary of features (when using advised software):
+ - Object editing in python source code
  - Code Completion & Syntax highlighting of your favourite IDE
  - Support for maps as "folders" as well as "mpq"
  - Quick maptesting through command line interface
@@ -126,6 +127,41 @@ without supplying a map filename to the script. Alternatively, in IPython, run:
 ```python
 Jass.convert_all()
 ```
+# Object editing
+docstrings in python source files may be used to do json based object editing. Including a string with format:
+```python
+"""ObjEditor
+(json here)
+"""
+```
+will transfer the text (in the example: `(json here)`) to the json object editor plugin. The structure of the json can
+be understood from the following example on how to give a footman a modified channel ability:
+```json
+{
+    "unit": {
+        "hfoo": {
+            "uabi": "A000"
+        }
+    },
+    "ability": {
+        "ANcl>A000": {
+            "aher": {
+                "value": 0,
+                "level": 0,
+                "pointer": 0
+            },
+            "Ncl3": {
+                "value": 1,
+                "level": 1,
+                "pointer": 3
+            }
+        }
+    }
+}
+```
+It is not required to put all the object editing in a single file. You may use the object editor at as many points as
+you wish.
+
 # Code completion
 A very important part of modern programming is to have access to code completion. The translated jass code explained 
 above is available to include in python only for code completion (obviously the functionality only exists within wc3).

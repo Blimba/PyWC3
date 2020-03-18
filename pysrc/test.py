@@ -1,3 +1,29 @@
+
+
+"""ObjEditor
+{
+    "unit": {
+        "hfoo": {
+            "uabi": "A000"
+        }
+    },
+    "ability": {
+        "ANcl>A000": {
+            "aher": {
+                "value": 0,
+                "level": 0,
+                "pointer": 0
+            },
+            "Ncl3": {
+                "value": 1,
+                "level": 1,
+                "pointer": 3
+            }
+        }
+    }
+}
+"""
+
 from df.commonj import *
 from df.test import *
 from std.index import *
