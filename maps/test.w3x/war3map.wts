@@ -33,3 +33,9 @@ STRING 7
 Player 2
 }
 
+STRING 9
+// Abilities: A000 (c), Name (Name)
+{
+c
+}
+

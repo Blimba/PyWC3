@@ -155,6 +155,11 @@ main = replaced
 # or
 config = replaced
 ```
+- Direct conversion of bytestring to int for using ```b'hfoo'``` to get wc3 typeIDs:
+```python
+if(GetUnitTypeId(u)==b'hf00'):
+    print('it is a footman!')
+```
 - A Timer module, which is very simple to use:
 ```python
 from std.index import *
@@ -174,7 +179,7 @@ AddScriptHook(test,MAIN_AFTER)
 
 Here is a bit of example code. Full documentation in progress...
 ```python
-u = Unit(0, "hfoo", 0, 0)  # create a unit for player 0 (red) at x: 0, y: 0.
+u = Unit(0, b"hfoo", 0, 0)  # create a unit for player 0 (red) at x: 0, y: 0.
 u.name = "My Footy"  # change the unit name
 print(u.name)  # or print it
 u.max_hp = 500
