@@ -181,18 +181,19 @@ class Map:
         try: return lst
         except: return []
 
-    def get_war3maplua(self):
-        if self._is_mpq:
-            if(not os.path.exists('temp/war3map.lua')):
-                if not os.path.exists('temp'):
-                    os.mkdir('temp')
-                self._print_sp(subprocess.Popen([self.cfg['MPQ_EXE'], 'e', os.path.join(self.cfg['MAP_FOLDER'], self.file), 'war3map.lua'],
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE))
-                os.rename('war3map.lua','temp/war3map.lua')
-            return 'temp/war3map.lua'
-        else:
-            return os.path.join(self.cfg['MAP_FOLDER'], self.file, "war3map.lua")
+    # def get_war3maplua(self):
+    #     print('test')
+    #     if self._is_mpq:
+    #         if(not os.path.exists('temp/war3map.lua')):
+    #             if not os.path.exists('temp'):
+    #                 os.mkdir('temp')
+    #             self._print_sp(subprocess.Popen([self.cfg['MPQ_EXE'], 'e', os.path.join(self.cfg['MAP_FOLDER'], self.file), 'war3map.lua'],
+    #                                     stdout=subprocess.PIPE,
+    #                                     stderr=subprocess.PIPE))
+    #             os.rename('war3map.lua','temp/war3map.lua')
+    #         return 'temp/war3map.lua'
+    #     else:
+    #         return os.path.join(self.cfg['MAP_FOLDER'], self.file, "war3map.lua")
 
     def build_script(self,src,dst):
         # remove extension if required
@@ -200,7 +201,7 @@ class Map:
         spl = filename.split(".")
         if spl[-1] == 'w3m' or spl[-1] == 'w3x':
             filename = ".".join(spl[:-1])
-
+        print(src,dst)
         # write translated lua files
         with open(dst, "w") as f:
             # write map code
@@ -232,53 +233,64 @@ class Map:
 
         print("> Generating distribution map files...")
         fn = os.path.join(self.cfg['MAP_FOLDER'], self.file)
-        if self._save_mpq:
-            self.build_script(
-                self.get_war3maplua(),
-                'war3map.lua'
-            )
+        if os.path.exists('temp'):
+            shutil.rmtree('temp')
+        if self._is_mpq:
+            if not os.path.exists('temp'):
+                os.mkdir('temp')
+                if not os.path.exists('temp/src'):
+                    os.mkdir('temp/src')
+                if not os.path.exists('temp/dist'):
+                    os.mkdir('temp/dist')
+            if not os.path.isfile(fn) and os.path.isfile(self.cfg['MPQ_EXE']):
+                raise SystemError("Map file is an mpq archive and MPQEditor.exe does not exist.")
+            self._print_sp(subprocess.Popen([self.cfg['MPQ_EXE'], 'e', fn, '*', 'temp/src', '/fp'],
+                                            stdout=subprocess.PIPE,
+                                            stderr=subprocess.PIPE))
+        else:
+            shutil.copytree(fn,'temp/src')
+            os.mkdir('temp/dist')
 
-            # if we start out as a file
-            if self._is_mpq:
-                nfn = os.path.join(self.cfg['DIST_FOLDER'], self.file)
-                shutil.copyfile(fn, nfn)
-            else:
-                # create mpq archive from folder
-                nfn = os.path.join(self.cfg['DIST_FOLDER'], self.file)
-                self._print_sp(subprocess.Popen([self.cfg['MPQ_EXE'], 'n', nfn],
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE))
-                for root,dir,files in os.walk(fn):
-                    for file in files:
-                        nroot = root.replace(fn, '').lstrip('\\')
-                        self._print_sp(subprocess.Popen([self.cfg['MPQ_EXE'], 'a', nfn, os.path.join(root,file), os.path.join(nroot,file)],
-                                                        stdout=subprocess.PIPE,
-                                                        stderr=subprocess.PIPE))
-            # add the new script to the mpq
-            self._print_sp(subprocess.Popen([self.cfg['MPQ_EXE'], 'a', nfn, 'war3map.lua'],
+        if not os.path.exists('temp/src/war3map.lua'):
+            raise SystemError("Map does not include lua script. Please edit the map and choose lua as scripting language.")
+        self.build_script(
+            'temp/src/war3map.lua',
+            'temp/dist/war3map.lua',
+        )
+        for objfile in self.objfiles:
+            objf = self.objfiles[objfile]
+            print("> Building ObjFile {}...".format(objf.filename))
+            objf.write('temp/dist')
+
+        if self._save_mpq:
+            if not os.path.isfile(self.cfg['MPQ_EXE']):
+                raise SystemError("Map file is an mpq archive and MPQEditor.exe does not exist.")
+            # create mpq archive from folder
+            nfn = os.path.join(self.cfg['DIST_FOLDER'], self.file)
+            self._print_sp(subprocess.Popen([self.cfg['MPQ_EXE'], 'n', nfn],
                                     stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE))
-            os.remove('war3map.lua')
+
+            for root,dir,files in os.walk('temp/src'):
+                for file in files:
+                    nroot = root.replace('temp/src', '').lstrip('\\')
+                    self._print_sp(subprocess.Popen([self.cfg['MPQ_EXE'], 'a', nfn, os.path.join(root,file), os.path.join(nroot,file)],
+                                                    stdout=subprocess.PIPE,
+                                                    stderr=subprocess.PIPE))
+            for root,dir,files in os.walk('temp/dist'):
+                for file in files:
+                    nroot = root.replace('temp/dist', '').lstrip('\\')
+                    self._print_sp(subprocess.Popen([self.cfg['MPQ_EXE'], 'a', nfn, os.path.join(root,file), os.path.join(nroot,file)],
+                                                    stdout=subprocess.PIPE,
+                                                    stderr=subprocess.PIPE))
         else:
             # copy the map
-            if os.path.isfile(fn) and os.path.isfile(self.cfg['MPQ_EXE']):
-                self._print_sp(subprocess.Popen([self.cfg['MPQ_EXE'], 'e', fn, '*', 'temp'],
-                                                stdout=subprocess.PIPE,
-                                                stderr=subprocess.PIPE))
-                shutil.copytree('temp',os.path.join(self.cfg['DIST_FOLDER'], self.file))
-            elif os.path.isdir(fn):
-                shutil.copytree(os.path.join(self.cfg['MAP_FOLDER'], self.file),os.path.join(self.cfg['DIST_FOLDER'], self.file))
-
-
-            self.build_script(
-                self.get_war3maplua(),
-                os.path.join(self.cfg['DIST_FOLDER'], self.file, "war3map.lua")
-            )
-            for objfile in self.objfiles:
-                objf = self.objfiles[objfile]
-                print("> Building ObjFile {}...".format(objf.filename))
-                objf.write(os.path.join(self.cfg['DIST_FOLDER'], self.file))
-
+            shutil.copytree('temp/src', os.path.join(self.cfg['DIST_FOLDER'], self.file))
+            for root, dir, files in os.walk('temp/dist'):
+                for file in files:
+                    nroot = root.replace('temp/dist', '').lstrip('\\')
+                    shutil.copy(os.path.join(root,file),os.path.join(self.cfg['DIST_FOLDER'], self.file, nroot, file))
+            # shutil.copytree('temp/dist', os.path.join(self.cfg['DIST_FOLDER'], self.file))
         try: shutil.rmtree('temp')
         except: pass  # no problem
         print("Build completed.")
@@ -311,7 +323,31 @@ AddScriptHook({}, MAIN_AFTER)
 
         if spl[-1] == 'w3m' or spl[-1] == 'w3x':
             filename = ".".join(spl[:-1])
-        inf = self.get_war3maplua()
+
+        fn = os.path.join(self.cfg['MAP_FOLDER'], self.file)
+        if os.path.exists('temp'):
+            shutil.rmtree('temp')
+        if self._is_mpq:
+            if not os.path.exists('temp'):
+                os.mkdir('temp')
+                if not os.path.exists('temp/src'):
+                    os.mkdir('temp/src')
+                if not os.path.exists('temp/dist'):
+                    os.mkdir('temp/dist')
+            if not os.path.isfile(fn) and os.path.isfile(self.cfg['MPQ_EXE']):
+                raise SystemError("Map file is an mpq archive and MPQEditor.exe does not exist.")
+            self._print_sp(subprocess.Popen([self.cfg['MPQ_EXE'], 'e', fn, 'war3map.lua', 'temp/src'],
+                                            stdout=subprocess.PIPE,
+                                            stderr=subprocess.PIPE))
+        else:
+            if not os.path.exists('temp'):
+                os.mkdir('temp')
+                if not os.path.exists('temp/src'):
+                    os.mkdir('temp/src')
+                if not os.path.exists('temp/dist'):
+                    os.mkdir('temp/dist')
+            shutil.copy(os.path.join(fn,'war3map.lua'),'temp/src/war3map.lua')
+        inf = 'temp/src/war3map.lua'
         print("Generating python definitions from map source: {}.".format(inf))
         with open(inf, "r") as f:
             for match in re.findall(r"^[\s]*(gg_[^\s]+) = (.+)$", "".join(f.readlines()), flags=re.MULTILINE):
@@ -325,3 +361,4 @@ AddScriptHook({}, MAIN_AFTER)
             for var in gbls:
                 f.write("{} = {}\n".format(var, gbls[var]))
         print("Definitions created in {}".format(outf))
+        shutil.rmtree('temp')
