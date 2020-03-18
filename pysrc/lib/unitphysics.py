@@ -48,12 +48,18 @@ class PhysicsUnit(Unit,Particle):
 
     def on_unithit(self,u):
         z = u.z
+        # check if the unit is still in range after moving it back (only happens if the hit isn't caused by velocity but by walking) probably not required?
         if IsUnitInRangeXY(u._handle, self.position.x, self.position.y, self.size) and self.position.z > (z - self.height) and self.position.z < (z + 90):
-            if len(self.walking_velocity) > 1:
+            if len(self.walking_velocity) > 0.1:
                 pv = self.position - Vector3(u.x, u.y, self.position.z,True)
                 l = len(pv)
                 pv = pv
                 v = pv*(1-(self.size + u.collision_size) / l)
+                # check if the hitting unit is a physics unit and is walking (self.walking_velocity > 0)
+                # if so, remove each unit half the other.
+                ws = len(u.walking_velocity) if u.walking_velocity != None else 0.0
+                if ws > 0.1:
+                    v *= 0.5
                 self.position.subtract(v)
 
 

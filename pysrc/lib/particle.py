@@ -120,7 +120,7 @@ class Particle(Cyclist):
                             z = BlzGetUnitZ(u)+GetUnitFlyHeight(u)
                             if self.position.z > (z - self.height) and self.position.z < (z+90):  # hardcoded unit height. Replace later!
                                 self.position.subtract(v)
-                                self.on_unithit(Unit(u))
+                                self.on_unithit(Unit.get(u) or Unit(u))
                                 if self.dead == False:
                                     # certain weird things might cause a nan. Catch it and fix
                                     if self.velocity.x != self.velocity.x: self.velocity.x = 0

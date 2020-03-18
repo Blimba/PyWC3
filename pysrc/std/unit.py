@@ -258,6 +258,7 @@ class UnitAbility:
 class Unit(Handle):
     _loc = Location(0,0)
     _grp = CreateGroup()
+
     def __init__(self, playerid, unitid=0, x=0, y=0, face = 0, skinid = None):
         if isinstance(playerid, int):
             if isinstance(unitid, str):
