@@ -5,7 +5,7 @@ import re
 from pythonlua.translator import Translator
 import shutil
 import json
-from PyWC3.obj import ObjFile
+from PyWC3.obj import ObjFile, DooFile
 
 class Map:
     def __init__(self, file, **kwargs):
@@ -338,6 +338,9 @@ AddScriptHook({}, MAIN_AFTER)
             self._print_sp(subprocess.Popen([self.cfg['MPQ_EXE'], 'e', fn, 'war3map.lua', 'temp/src'],
                                             stdout=subprocess.PIPE,
                                             stderr=subprocess.PIPE))
+            self._print_sp(subprocess.Popen([self.cfg['MPQ_EXE'], 'e', fn, 'war3map.doo', 'temp/src'],
+                                            stdout=subprocess.PIPE,
+                                            stderr=subprocess.PIPE))
         else:
             if not os.path.exists('temp'):
                 os.mkdir('temp')
@@ -345,7 +348,8 @@ AddScriptHook({}, MAIN_AFTER)
                     os.mkdir('temp/src')
                 if not os.path.exists('temp/dist'):
                     os.mkdir('temp/dist')
-            shutil.copy(os.path.join(fn,'war3map.lua'),'temp/src/war3map.lua')
+            shutil.copy(os.path.join(fn, 'war3map.lua'),'temp/src/war3map.lua')
+            shutil.copy(os.path.join(fn, 'war3map.doo'), 'temp/src/war3map.doo')
         inf = 'temp/src/war3map.lua'
         print("Generating python definitions from map source: {}.".format(inf))
         with open(inf, "r") as f:
@@ -359,5 +363,20 @@ AddScriptHook({}, MAIN_AFTER)
             f.write("from .commonai import *\n")
             for var in gbls:
                 f.write("{} = {}\n".format(var, gbls[var]))
+            if self.cfg['READ_DOO']:
+                df = DooFile()
+                df.read('temp/src')
+                if len(df.objs['doo']) > 0:
+                    f.write("\n# Below are the preplaced doodads\n\n")
+                for doo in df.objs['doo']:
+                    doo['id'] = doo['id'].decode('utf-8')
+                    doo['angle'] = doo['angle'] * 57.2958  # rad2deg
+                    f.write('# {id}_{we_id} variation {var} at position ({x:.4g}, {y:.4g}, {z:.4g}), scale ({sx:.4g}, {sy:.4g}, {sz:.4g}), angle {angle:.4g}\n'.format(**doo))
+                if len(df.objs['cliff']) > 0:
+                    f.write("\n# Below are the preplaced cliff/terrain doodads\n\n")
+                for doo in df.objs['cliff']:
+                    doo['id'] = doo['id'].decode('utf-8')
+                    f.write('# {id} at position ({x}, {y}, {z})\n'.format(**doo))
         print("Definitions created in {}".format(outf))
+
         shutil.rmtree('temp')

@@ -29,6 +29,7 @@ from std.index import *
 from lib.click_plane import *
 from lib.unitphysics import *
 from std.player import *
+# from lib.mouseevent import *
 #
 # class testc:
 #     o = None
@@ -56,7 +57,6 @@ class FloatingPlatform(Box):
         # self.fx.add_sub_animation(SUBANIM_TYPE_ALTERNATE_EX)
         self.fx.animate(ANIM_TYPE_DEATH)
 
-
 def test():
     offset = [576,0,140]
     mult = [128,128,35]
@@ -75,12 +75,12 @@ def test():
         Particle.collidables.append(FloatingPlatform(v.x*mult[0]+offset[0],v.y*mult[1]+offset[1],v.z*mult[2]+offset[2]))
     for i in range(2):
         pu = PhysicsUnit(0,b'hfoo', 0,0)
-        pu.on_death = lambda u: print(u.name + " has died.")
-        pu.life = 1
-    # for i in range(2):
-    #     PhysicsUnit(1,'hfoo', 0,-100*i)
+        pu.on_death = lambda u: print(u.name + " of red has died.")
+    for i in range(2):
+        pu = PhysicsUnit(1,'hfoo', 0,-100*i)
+        pu.on_death = lambda u: print(u.name + " of blue has died.")
     Player.on_escape = lambda self, p: print(Player.color[GetPlayerId(p)] + GetPlayerName(p) + "|r has pressed escape.")
-    # print(PyPlayer(0,0))
+
 
 
 

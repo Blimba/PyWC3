@@ -13,5 +13,6 @@
     "PYTHON_SOURCE_FOLDER": "pysrc",
     "DEF_SUBFOLDER": "df",
 
+    "READ_DOO": true,
     "SHOW_AST": false
 }

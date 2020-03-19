@@ -2,31 +2,10 @@
 import struct
 import json
 import os
-class ObjFile:
-    var_types = {
-        0: "<i",
-        1: "<f",
-        2: "<f",
-        3: "s",
-    }
-    formats = {
-        'w3a': 'obj_format_ex.json',  # ability
-        'w3d': 'obj_format_ex.json',  # doodad
-        'w3q': 'obj_format_ex.json',  # upgrade
-        'w3u': 'obj_format.json',  # unit
-        'w3t': 'obj_format.json',  # item
-        'w3b': 'obj_format.json',  # destructable
-        'w3h': 'obj_format.json',  # buff
-    }
-    files = {
-        'ability': 'war3map.w3a',
-        'doodad': 'war3map.w3d',
-        'upgrade': 'war3map.w3q',
-        'unit': 'war3map.w3u',
-        'item': 'war3map.w3t',
-        'destructable': 'war3map.w3b',
-        'buff': 'war3map.w3h',
-    }
+
+
+class DataFile:
+
     def traverse_init(self,format,ret):
         for key in format:
             if isinstance(format[key], dict):
@@ -34,19 +13,17 @@ class ObjFile:
             else:
                 ret[key] = 0
 
-    def __init__(self,format):
-        if isinstance(format,str):
-            self.filename = ObjFile.files[format]
-            format = json.load(open(os.path.join("PyWC3\PyWC3",ObjFile.formats[ObjFile.files[format].split('.')[-1]])))
-
+    def __init__(self,format,filename=None):
+        self.filename = filename
+        format = json.load(open(os.path.join("PyWC3\PyWC3", format)))
         self.format = format
         self.objs = {}
-        self.traverse_init(self.format,self.objs)
-        self.objs['version'] = b"\x02\x00\x00\x00"
+        self.traverse_init(self.format, self.objs)
+
 
 
     def read_var(self,fmt):
-        if struct.calcsize(fmt) > 1:
+        if struct.calcsize(fmt) > 1 or fmt == 'b':
             return struct.unpack(fmt,self.f.read(struct.calcsize(fmt)))[0]
         else:
             # read a \0 terminated string
@@ -80,8 +57,9 @@ class ObjFile:
                 except:
                     ret[key] = self.read_var(ObjFile.var_types[ret[format[key]]])
 
-    def read(self,path='.'):
-        filename = os.path.join(path,self.filename)
+    def read(self,path='.',filename=None):
+        if not filename:
+            filename = os.path.join(path,self.filename)
         with open(filename,"rb") as self.f:
             self.objs = {}
             self.traverse_read(self.format,self.objs)
@@ -90,7 +68,7 @@ class ObjFile:
         if isinstance(var,int):
             w = struct.pack("<i",var)
         elif isinstance(var,bytes):
-            w = struct.pack("4s",var)
+            w = struct.pack("{}s".format(len(var)),var)
         elif isinstance(var,float):
             w = struct.pack("<f", var)
         elif isinstance(var,str):
@@ -113,6 +91,39 @@ class ObjFile:
         filename = os.path.join(path, self.filename)
         with open(filename,"wb") as self.f:
             self.traverse_write(self.format, self.objs)
+
+
+
+
+class ObjFile(DataFile):
+    var_types = {
+        0: "<i",
+        1: "<f",
+        2: "<f",
+        3: "s",
+    }
+    formats = {
+        'w3a': 'obj_format_ex.json',  # ability
+        'w3d': 'obj_format_ex.json',  # doodad
+        'w3q': 'obj_format_ex.json',  # upgrade
+        'w3u': 'obj_format.json',  # unit
+        'w3t': 'obj_format.json',  # item
+        'w3b': 'obj_format.json',  # destructable
+        'w3h': 'obj_format.json',  # buff
+    }
+    files = {
+        'ability': 'war3map.w3a',
+        'doodad': 'war3map.w3d',
+        'upgrade': 'war3map.w3q',
+        'unit': 'war3map.w3u',
+        'item': 'war3map.w3t',
+        'destructable': 'war3map.w3b',
+        'buff': 'war3map.w3h',
+    }
+
+    def __init__(self, format):
+        super().__init__(ObjFile.formats[ObjFile.files[format].split('.')[-1]],ObjFile.files[format])
+        self.objs['version'] = b"\x02\x00\x00\x00"
 
     def remove_obj(self,id):
         for obj in self.objs['edited']:
@@ -210,3 +221,6 @@ class ObjFile:
         self.add_mod(obj_id,mod_id,value,level,pointer,from_id=from_id)
         return True
 
+class DooFile(DataFile):
+    def __init__(self):
+        super().__init__('doo_format.json','war3map.doo')
