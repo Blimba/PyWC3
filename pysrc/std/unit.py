@@ -4,7 +4,7 @@ from compatibility import *
 from ..df.blizzardj import bj_MAX_PLAYERS
 from index import *
 import math
-
+from event import *
 """
 not implementing:
 ConvertUnitState
@@ -97,29 +97,15 @@ SetUnitCreepGuard
 BlzGetLocalUnitZ
 """
 
-class PlayerUnitEvent(Handle):
-    @staticmethod
-    def _triggered():
-        self = Handle.get(GetTriggeringTrigger())
-        nargs = []
-        for arg in self.args:
-            if callable(arg):
-                nargs.append(arg())
-        if callable(getattr(nargs[0],self.callback)):
-            try: getattr(nargs[0],self.callback)(*nargs)
-            except: print(Error)
-
-    def __init__(self, playerunitevent, callback, *args):
-        Handle.__init__(self,CreateTrigger)
-        self.callback = callback
-        self.args = args  # these are the event units that should be called!
+class PlayerUnitEvent(ClassEvent):
+    def __init__(self, playerunitevent, methodname, getter, *args):
+        ClassEvent.__init__(self,methodname,getter,*args)
         for playerid in range(bj_MAX_PLAYERS):
             if type(playerunitevent) == list:
                 for pue in playerunitevent:
-                    TriggerRegisterPlayerUnitEvent(self._handle, Player(playerid), pue, None)
+                    self.register(TriggerRegisterPlayerUnitEvent, Player(playerid), pue)
             else:
-                TriggerRegisterPlayerUnitEvent(self._handle, Player(playerid), playerunitevent, None)
-        TriggerAddAction(self._handle, PlayerUnitEvent._triggered)
+                self.register(TriggerRegisterPlayerUnitEvent, Player(playerid), playerunitevent)
 
 class UnitInventory:
     def __init__(self,unit):

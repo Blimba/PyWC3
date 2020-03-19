@@ -2,30 +2,18 @@ from .index import *
 from ..df.commonj import *
 from ..df.blizzardj import bj_MAX_PLAYERS
 from .handle import *
+from .event import *
 
-class PlayerEvent(Handle):
-    @staticmethod
-    def _triggered():
-        self = Handle.get(GetTriggeringTrigger())
-        nargs = []
-        for arg in self.args:
-            if callable(arg):
-                nargs.append(arg())
-        if callable(getattr(Player,self.callback)):
-            try: getattr(Player,self.callback)(*nargs)
-            except: print(Error)
-
-    def __init__(self, playerevent, callback, *args):
-        Handle.__init__(self,CreateTrigger)
-        self.callback = callback
-        self.args = args  # these are the event units that should be called!
+class PlayerEvent(ClassEvent):
+    def __init__(self, playerevent, methodname, *args):
+        ClassEvent.__init__(self, methodname, Player, *args)
         for playerid in range(bj_MAX_PLAYERS):
             if type(playerevent) == list:
                 for pue in playerevent:
-                    TriggerRegisterPlayerEvent(self._handle, Player(playerid), pue)
+                    self.register(TriggerRegisterPlayerEvent, Player(playerid), pue)
             else:
-                TriggerRegisterPlayerEvent(self._handle, Player(playerid), playerevent)
-        TriggerAddAction(self._handle, PlayerEvent._triggered)
+                self.register(TriggerRegisterPlayerEvent, Player(playerid), playerevent)
+
 BlzPlayer = Player
 class Player:
     color = [

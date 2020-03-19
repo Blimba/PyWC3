@@ -1,5 +1,3 @@
-
-
 """ObjEditor
 {
     "unit": {
@@ -18,7 +16,8 @@
                 "value": 1,
                 "level": 1,
                 "pointer": 3
-            }
+            },
+            "Ncl1": { "value": 1.0, "level": 1, "pointer": 1 }
         }
     }
 }
@@ -29,7 +28,7 @@ from df.test import *
 from std.index import *
 from lib.click_plane import *
 from lib.unitphysics import *
-
+from std.player import *
 #
 # class testc:
 #     o = None
@@ -45,6 +44,8 @@ from lib.unitphysics import *
 #
 # def test():
 #     TimerStart(CreateTimer(),0.01,True,c)
+
+
 
 class FloatingPlatform(Box):
     def __init__(self,x,y,z):
@@ -72,11 +73,15 @@ def test():
     ]
     for v in lst:
         Particle.collidables.append(FloatingPlatform(v.x*mult[0]+offset[0],v.y*mult[1]+offset[1],v.z*mult[2]+offset[2]))
-    print(b'hfoo')
-    print(FourCC("hfoo"))
     for i in range(2):
-        PhysicsUnit(0,b'hfoo', 0,0)
+        pu = PhysicsUnit(0,b'hfoo', 0,0)
+        pu.on_death = lambda u: print(u.name + " has died.")
+        pu.life = 1
     # for i in range(2):
     #     PhysicsUnit(1,'hfoo', 0,-100*i)
+    Player.on_escape = lambda self, p: print(Player.color[GetPlayerId(p)] + GetPlayerName(p) + "|r has pressed escape.")
+    # print(PyPlayer(0,0))
+
+
 
 AddScriptHook(test,MAIN_AFTER)
