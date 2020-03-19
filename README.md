@@ -3,6 +3,7 @@ PyWC3 is a comprehensive method for Warcraft III modding using python. The code 
  use the more modern features of python (for specifics see [pythonlua](http://www.github.com/Blimba/python-lua/)). 
  Summary of features (when using advised software):
  - Object editing in python source code
+ - Outputs the preplaced doodad properties as code comments so you can see their positions quickly
  - Code Completion & Syntax highlighting of your favourite IDE
  - Support for maps as "folders" as well as "mpq"
  - Quick maptesting through command line interface
@@ -102,6 +103,7 @@ imported by:
 ```python
 from df.mapname import *  #mapname needs to be replaced by the actual map filename.
 ```
+If you view the above file, you will find the preplaced doodads as comments.
 ### As a module in IPython
 To start IPython, run the IPython.bat script, which automatically imports PyWC3. Then, use the `Map()` module:
 ```python

@@ -1,0 +1,31 @@
+{
+    "header": "<i",
+    "version": "<i",
+    "subv": "<i",
+    "num_doo": "<i",
+    "doo": {
+        "id": "4s",
+        "var": "<i",
+        "x": "<f",
+        "y": "<f",
+        "z": "<f",
+        "angle": "<f",
+        "sx": "<f",
+        "sy": "<f",
+        "sz": "<f",
+        "idagain": "4s",
+        "flags": "b",
+        "life": "b",
+        "ffff": "4s",
+        "0000": "<i",
+        "we_id": "<i"
+    },
+    "_": "<i",
+    "num_cliff": "<i",
+    "cliff": {
+        "id": "4s",
+        "z": "<i",
+        "y": "<i",
+        "x": "<i"
+    }
+}
