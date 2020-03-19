@@ -37,12 +37,12 @@ you can use the `Warcraft III Scenario (- Expansion)` (MPQ) format as long as yo
 The config.json file contains file references used by the project. It has the general structure:  
 ```json
 {
-    "WAR3_EXE": "C:\\Games\\Warcraft III\\x86_64\\Warcraft III.exe",
-    "WE_EXE": "C:\\Games\\Warcraft III\\x86_64\\World Editor.exe",
-    "WINDOWMODE": "windowed",
+    "WAR3_EXE": "E:\\Games\\Warcraft III\\x86_64\\Warcraft III.exe",
+    "WE_EXE": "E:\\Games\\Warcraft III\\x86_64\\World Editor.exe",
+    "WINDOWMODE": "window",
 
     "MPQ_EXE": "mpqeditor\\mpqeditor.exe",
-    "SAVE_AS_MPQ": true,
+    "SAVE_AS_MPQ": false,
 
     "MAP_FOLDER": "maps",
     "DIST_FOLDER": "dist",
@@ -51,6 +51,7 @@ The config.json file contains file references used by the project. It has the ge
     "PYTHON_SOURCE_FOLDER": "pysrc",
     "DEF_SUBFOLDER": "df",
 
+    "READ_DOO": true,
     "SHOW_AST": false
 }
 ``` 
