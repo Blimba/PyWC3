@@ -6,11 +6,15 @@ from pythonlua.translator import Translator
 import shutil
 import json
 from .obj import ObjFile, DooFile, DataFile
-
+import importlib
+import sys
 class Map:
     def __init__(self, file, **kwargs):
-        with open("config.json","r") as f:
-            self.cfg = json.load(f)
+        try:
+            with open("config.json","r") as f:
+                self.cfg = json.load(f)
+        except FileNotFoundError:
+            raise SystemError("Configuration file config.json not found!")
         self._save_mpq = kwargs.get('save_mpq',self.cfg['SAVE_AS_MPQ'])
         if os.path.exists(os.path.join(self.cfg['MAP_FOLDER'], file)):
             self.file = file
@@ -25,6 +29,7 @@ class Map:
         else:
             raise Exception("Mapfile {} not found!".format(os.path.join(os.getcwd(),self.cfg['MAP_FOLDER'], file)))
         self.objfiles = {}
+        sys.path.append('pysrc')
 
     def _print_sp(self,proc):
         output = []
@@ -106,11 +111,28 @@ class Map:
                     self.objfiles[file].add_mod(new_id,id,value,level,pointer,from_id=old_id)
 
     def translate_file(self, file):
-        # print("> Translating file {}...".format(file))
+        '''
+        Translate a python script to lua. Also check for preprocessor calls such as """ObjEditor..."""
+        '''
         with open(file, "r") as f:
             content = "".join(f.readlines())
         content = re.sub("^import (.+)$", "", content, flags=re.MULTILINE)
         content = re.sub("^from (.+) import (.+)*", "", content, flags=re.MULTILINE)
+        for fn in re.findall("^\s*#ObjEditor=([\S]+?)\s*$", content, flags=re.MULTILINE):
+            if fn.split('.')[-1] == "json":
+                fn = os.path.join(self.cfg['PYTHON_SOURCE_FOLDER'],fn)
+                try:
+                    with open(fn,"r") as f:
+                        c = "".join(f.readlines())
+                        self.objeditor(c)
+                except FileNotFoundError:
+                    raise SystemError("ObjEditor json file {} not found in {}!".format(fn,os.getcwd()))
+        for fn in re.findall("^\s*#RunPy=([\S]+?)\s*$", content, flags=re.MULTILINE):
+            if fn.split('.')[-1] == "py":
+                fn = fn.split('.')[0].replace("\\",".")
+                try: imp = importlib.import_module(fn)
+                except ModuleNotFoundError: raise SystemError('Module {} not found!'.format(fn))
+                imp.main(self)
         for c in re.findall("\'{3}ObjEditor([\s\S]+?)\'{3}", content, flags=re.MULTILINE):
             self.objeditor(c)
         for c in re.findall("\"{3}ObjEditor([\s\S]+?)\"{3}", content, flags=re.MULTILINE):
@@ -119,6 +141,9 @@ class Map:
 
 
     def import_tree_to_list(self,lst):
+        '''
+        Flatten the tree structure to a sorted import list
+        '''
         flatten = lambda x: [y for l in x for y in flatten(l)] if type(x) is list else [x]
         def unique(l):
             rl = []
@@ -148,7 +173,9 @@ class Map:
         return nfilelst
 
     def get_dependencies(self, file, exclude=True):
-        # print("> Reading file {}...".format(file))
+        '''
+        find the imports in files and add them to a tree structure
+        '''
         try:
             with open(file, "r") as f:
                 lst = []
@@ -181,20 +208,6 @@ class Map:
         try: return lst
         except: return []
 
-    # def get_war3maplua(self):
-    #     print('test')
-    #     if self._is_mpq:
-    #         if(not os.path.exists('temp/war3map.lua')):
-    #             if not os.path.exists('temp'):
-    #                 os.mkdir('temp')
-    #             self._print_sp(subprocess.Popen([self.cfg['MPQ_EXE'], 'e', os.path.join(self.cfg['MAP_FOLDER'], self.file), 'war3map.lua'],
-    #                                     stdout=subprocess.PIPE,
-    #                                     stderr=subprocess.PIPE))
-    #             os.rename('war3map.lua','temp/war3map.lua')
-    #         return 'temp/war3map.lua'
-    #     else:
-    #         return os.path.join(self.cfg['MAP_FOLDER'], self.file, "war3map.lua")
-
     def build_script(self,src,dst):
         # remove extension if required
         filename = self.file
@@ -205,13 +218,15 @@ class Map:
         with open(dst, "w") as f:
             # write map code
             with open(src, "r") as f2:
-                f.write("-- Generated map code\n")
+                f.write("-- Original map code\n")
                 f.write("".join(f2.readlines()))
                 f.write("\n")
             # write lua functions for pythonlua
             print("> Writing lua header...")
             f.write(Translator.get_luainit())
             # write python required libraries
+            if not os.path.exists(os.path.join(self.cfg['PYTHON_SOURCE_FOLDER'], "{}.py".format(filename))):
+                self.generate_python_source()
             for file in self.import_tree_to_list(self.get_dependencies(os.path.join(self.cfg['PYTHON_SOURCE_FOLDER'], "{}.py".format(filename)))):
                 f.write("-- Imported module {}\n".format(file))
                 f.write(self.translate_file(file))
@@ -231,6 +246,7 @@ class Map:
         except FileNotFoundError: pass  # no problem, carry on
 
         print("> Generating distribution map files...")
+        # generate temp folder and paste all files there. If the map is an MPQ, extract all files.
         fn = os.path.join(self.cfg['MAP_FOLDER'], self.file)
         if os.path.exists('temp'):
             shutil.rmtree('temp')
@@ -249,18 +265,24 @@ class Map:
         else:
             shutil.copytree(fn,'temp/src')
             os.mkdir('temp/dist')
-
         if not os.path.exists('temp/src/war3map.lua'):
             raise SystemError("Map does not include lua script. Please edit the map and choose lua as scripting language.")
+
+        self.src_path = 'temp/src'
+        self.dist_path = 'temp/dist'
+
+        # Build the map from the temporary src to dist folder.
         self.build_script(
             'temp/src/war3map.lua',
             'temp/dist/war3map.lua',
         )
+        # Build the ObjFiles, if they have been found in build_script.
         for objfile in self.objfiles:
             objf = self.objfiles[objfile]
             print("> Building ObjFile {}...".format(objf.filename))
             objf.write('temp/dist')
 
+        # Copy the temporary directories to the dist folder and include the built files. Save as MPQ if desired.
         if self._save_mpq:
             if not os.path.isfile(self.cfg['MPQ_EXE']):
                 raise SystemError("Map file is an mpq archive and MPQEditor.exe does not exist.")
@@ -289,7 +311,7 @@ class Map:
                 for file in files:
                     nroot = root.replace('temp/dist', '').lstrip('\\')
                     shutil.copy(os.path.join(root,file),os.path.join(self.cfg['DIST_FOLDER'], self.file, nroot, file))
-            # shutil.copytree('temp/dist', os.path.join(self.cfg['DIST_FOLDER'], self.file))
+        # remove the temp directory
         try: shutil.rmtree('temp')
         except: pass  # no problem
         print("Build completed.")
@@ -366,15 +388,15 @@ AddScriptHook({}, MAIN_AFTER)
             if self.cfg['READ_DOO']:
                 df = DooFile()
                 df.read('temp/src')
-                if len(df.objs['doo']) > 0:
+                if len(df.data['doo']) > 0:
                     f.write("\n# Below are the preplaced doodads\n\n")
-                for doo in df.objs['doo']:
+                for doo in df.data['doo']:
                     doo['id'] = doo['id'].decode('utf-8')
                     doo['angle'] = doo['angle'] * 57.2958  # rad2deg
                     f.write('# {id}_{we_id} variation {var} at position ({x:.4g}, {y:.4g}, {z:.4g}), scale ({sx:.4g}, {sy:.4g}, {sz:.4g}), angle {angle:.4g}\n'.format(**doo))
-                if len(df.objs['cliff']) > 0:
+                if len(df.data['cliff']) > 0:
                     f.write("\n# Below are the preplaced cliff/terrain doodads\n\n")
-                for doo in df.objs['cliff']:
+                for doo in df.data['cliff']:
                     doo['id'] = doo['id'].decode('utf-8')
                     f.write('# {id} at position ({x}, {y}, {z})\n'.format(**doo))
         print("Definitions created in {}".format(outf))

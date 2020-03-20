@@ -43,5 +43,4 @@ class Player:
         PlayerEvent(EVENT_PLAYER_END_CINEMATIC, "on_escape", GetTriggerPlayer)
 
 
-
 AddScriptHook(Player._init, MAIN_BEFORE)

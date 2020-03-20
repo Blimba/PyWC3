@@ -1,27 +1,5 @@
-"""ObjEditor
-{
-    "unit": {
-        "hfoo": {
-            "uabi": "A000"
-        }
-    },
-    "ability": {
-        "ANcl>A000": {
-            "aher": {
-                "value": 0,
-                "level": 0,
-                "pointer": 0
-            },
-            "Ncl3": {
-                "value": 1,
-                "level": 1,
-                "pointer": 3
-            },
-            "Ncl1": { "value": 1.0, "level": 1, "pointer": 1 }
-        }
-    }
-}
-"""
+#ObjEditor=test.json
+#RunPy=preprocess.py
 
 from df.commonj import *
 from df.test import *

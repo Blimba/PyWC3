@@ -17,8 +17,8 @@ class DataFile:
         self.filename = filename
         format = json.load(open(os.path.join("PyWC3\PyWC3", format)))
         self.format = format
-        self.objs = {}
-        self.traverse_init(self.format, self.objs)
+        self.data = {}
+        self.traverse_init(self.format, self.data)
 
 
 
@@ -63,8 +63,8 @@ class DataFile:
         if not filename:
             filename = os.path.join(path,self.filename)
         with open(filename,"rb") as self.f:
-            self.objs = {}
-            self.traverse_read(self.format,self.objs)
+            self.data = {}
+            self.traverse_read(self.format, self.data)
 
     def write_var(self,var,fmt):
         if isinstance(var,int):
@@ -95,7 +95,7 @@ class DataFile:
     def write(self,path='.'):
         filename = os.path.join(path, self.filename)
         with open(filename,"wb") as self.f:
-            self.traverse_write(self.format, self.objs)
+            self.traverse_write(self.format, self.data)
 
 
 
@@ -127,63 +127,64 @@ class ObjFile(DataFile):
     }
 
     def __init__(self, format):
-        super().__init__(ObjFile.formats[ObjFile.files[format].split('.')[-1]],ObjFile.files[format])
-        self.objs['version'] = b"\x02\x00\x00\x00"
+        try: super().__init__(ObjFile.formats[ObjFile.files[format].split('.')[-1]],ObjFile.files[format])
+        except KeyError: raise SystemError("ObjFile {} unknown!".format(format))
+        self.data['version'] = b"\x02\x00\x00\x00"
 
     def remove_obj(self,id):
-        for obj in self.objs['edited']:
+        for obj in self.data['edited']:
             if obj['old_id'] == id:
-                self.objs['edited'].remove(obj)
-                self.objs['num_edited'] -= 1
+                self.data['edited'].remove(obj)
+                self.data['num_edited'] -= 1
                 return True
-        for obj in self.objs['custom']:
+        for obj in self.data['custom']:
             if obj['new_id'] == id:
-                self.objs['custom'].remove(obj)
-                self.objs['num_custom'] -= 1
+                self.data['custom'].remove(obj)
+                self.data['num_custom'] -= 1
                 return True
         return False
 
     def remove_mod(self,obj_id,mod_id):
-        for obj in self.objs['edited']:
+        for obj in self.data['edited']:
             if obj['old_id'] == obj_id:
                 for mod in obj['mods']:
                     if mod['id'] == mod_id:
                         obj['mods'].remove(mod)
                         obj['num_mods']-=1
                         if obj['num_mods'] == 0:
-                            self.objs['edited'].remove(obj)
-                            self.objs['num_edited'] -= 1
+                            self.data['edited'].remove(obj)
+                            self.data['num_edited'] -= 1
                         return True
-        for obj in self.objs['custom']:
+        for obj in self.data['custom']:
             if obj['new_id'] == obj_id:
                 for mod in obj['mods']:
                     if mod['id'] == mod_id:
                         obj['mods'].remove(mod)
                         obj['num_mods'] -= 1
                         if obj['num_mods'] == 0:
-                            self.objs['custom'].remove(obj)
-                            self.objs['num_custom'] -= 1
+                            self.data['custom'].remove(obj)
+                            self.data['num_custom'] -= 1
                         return True
         return False
 
     def add_obj(self,obj_id,from_id=0):
         if from_id:
-            self.objs['num_custom'] += 1
+            self.data['num_custom'] += 1
             dct = {}
             self.traverse_init(self.format['custom'],dct)
             dct['old_id'] = from_id
             dct['new_id'] = obj_id
-            self.objs['custom'].append(dct)
+            self.data['custom'].append(dct)
         else:
-            self.objs['num_edited'] += 1
+            self.data['num_edited'] += 1
             dct = {}
             self.traverse_init(self.format['edited'], dct)
             dct['old_id'] = obj_id
             dct['new_id'] = b"\x00\x00\x00\x00"
-            self.objs['edited'].append(dct)
+            self.data['edited'].append(dct)
 
     def add_mod(self,obj_id,mod_id,value,level=0,pointer=0,from_id=0):
-        for obj in self.objs['custom']:
+        for obj in self.data['custom']:
             if obj['new_id'] == obj_id:
                 for mod in obj['mods']:
                     if mod['id'] == mod_id:
@@ -203,7 +204,7 @@ class ObjFile(DataFile):
                 obj['num_mods'] += 1
                 return True
 
-        for obj in self.objs['edited']:
+        for obj in self.data['edited']:
             if obj['old_id'] == obj_id:
                 for mod in obj['mods']:
                     if mod['id'] == mod_id:
@@ -259,8 +260,8 @@ class DooFile(DataFile):
         assert (isinstance(flags, bytes) and len(flags) == 1)
         life = life.to_bytes(1,'little')
         assert (isinstance(life, bytes) and len(life) == 1)
-        self.objs['num_doo'] += 1
-        doos = self.objs['doo']
+        self.data['num_doo'] += 1
+        doos = self.data['doo']
         doo = {
             'id': id,
             'var': var,
