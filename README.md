@@ -2,6 +2,7 @@
 PyWC3 is a comprehensive method for Warcraft III modding using python. The code is translated to lua but allows us to 
  use the more modern features of python (for specifics see [pythonlua](http://www.github.com/Blimba/python-lua/)). 
  Summary of features (when using advised software):
+ - Preprocessing scripts
  - Object editing in python source code
  - Outputs the preplaced doodad properties as code comments so you can see their positions quickly
  - Code Completion & Syntax highlighting of your favourite IDE
@@ -163,7 +164,36 @@ be understood from the following example on how to give a footman a modified cha
 }
 ```
 It is not required to put all the object editing in a single file. You may use the object editor at as many points as
-you wish.
+you wish. Another way is to make separate json files and calling them from a single comment line:
+```python
+# ObjEditor=jsonfile.json
+```
+The rootdirectory is the `PYTHON_SOURCE_FOLDER` directory.
+# Preprocessor scripts
+Using a comment line as follows:
+```python
+# RunPy=pythonfile.py
+```
+we can run preprocessor scripts that run just before the translation of that scriptfile. One possible use is to edit 
+map files, such as the war3map.doo, or object files (see above). It is possible to script generate preplaced doodads
+with high precision that is difficult to achieve inside the world editor. See the following example:
+
+preprocess.py:
+```python
+from PyWC3 import DooFile
+import numpy as np
+def main(mapobj):
+    df = DooFile()  # creates the DooFile object and initializes it 'empty'
+    try: df.read(mapobj.src_path)  # if possible, read the war3map.doo from the source path (the source map)
+    except FileNotFoundError: print('> Generating new war3map.doo file...')
+    for x in np.linspace(0,np.pi*2,50):
+        df.add_doo(b'APct',np.cos(x)*512,np.sin(x)*512,0)  # add a circle of doodads at the center of the map
+    df.write(mapobj.dist_path)  # write the new war3map.doo to the dist folder (the final map)
+```
+map.py:
+```python
+# RunPy=preprocess.py
+```
 
 # Code completion
 A very important part of modern programming is to have access to code completion. The translated jass code explained 
