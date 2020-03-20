@@ -23,7 +23,9 @@ class DataFile:
 
 
     def read_var(self,fmt):
-        if struct.calcsize(fmt) > 1 or fmt == 'b':
+        if fmt == 'b':
+            return self.f.read(1)
+        elif struct.calcsize(fmt) > 1:
             return struct.unpack(fmt,self.f.read(struct.calcsize(fmt)))[0]
         else:
             # read a \0 terminated string
@@ -68,7 +70,10 @@ class DataFile:
         if isinstance(var,int):
             w = struct.pack("<i",var)
         elif isinstance(var,bytes):
-            w = struct.pack("{}s".format(len(var)),var)
+            if len(var)==1:
+                w = var
+            else:
+                w = struct.pack("{}s".format(len(var)),var)
         elif isinstance(var,float):
             w = struct.pack("<f", var)
         elif isinstance(var,str):
@@ -222,5 +227,55 @@ class ObjFile(DataFile):
         return True
 
 class DooFile(DataFile):
+    flags = {
+        'custom_z': int('100',2),
+        'visible': int('010',2),
+        'invisible': int('001',2)
+    }
     def __init__(self):
         super().__init__('doo_format.json','war3map.doo')
+
+    def add_doo(self,id,x,y,z,var=0,a=0.0,sx=1.0,sy=1.0,sz=1.0,flags=None,life=100):
+        x = float(x)
+        y = float(y)
+        z = float(z)
+        a = float(a)
+        sx = float(sx)
+        sy = float(sy)
+        sz = float(sz)
+        var = int(var)
+        if not flags:
+            flags = DooFile.flags['custom_z'] | DooFile.flags['visible']
+        flags = flags.to_bytes(1,'little')
+        assert(isinstance(var,int))
+        assert (isinstance(id, bytes))
+        assert (isinstance(x, float))
+        assert (isinstance(y, float))
+        assert (isinstance(z, float))
+        assert (isinstance(a, float))
+        assert (isinstance(sx, float))
+        assert (isinstance(sy, float))
+        assert (isinstance(sz, float))
+        assert (isinstance(flags, bytes) and len(flags) == 1)
+        life = life.to_bytes(1,'little')
+        assert (isinstance(life, bytes) and len(life) == 1)
+        self.objs['num_doo'] += 1
+        doos = self.objs['doo']
+        doo = {
+            'id': id,
+            'var': var,
+            'x': x,
+            'y': y,
+            'z': z,
+            'angle': a / 57.2958,
+            'sx': sx,
+            'sy': sy,
+            'sz': sz,
+            'idagain': id,
+            'ffff': b"\xFF\xFF\xFF\xFF",
+            'flags': flags,
+            'life': life,
+            '0000': 0,
+            'we_id': doos[-1]['we_id']+1,
+        }
+        doos.append(doo)

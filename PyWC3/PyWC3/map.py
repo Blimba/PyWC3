@@ -5,7 +5,7 @@ import re
 from pythonlua.translator import Translator
 import shutil
 import json
-from PyWC3.obj import ObjFile, DooFile
+from .obj import ObjFile, DooFile, DataFile
 
 class Map:
     def __init__(self, file, **kwargs):
