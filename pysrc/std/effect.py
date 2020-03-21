@@ -1,3 +1,11 @@
+"""
+
+    Effect
+
+    A wrapper for the blizzard 'effect' handle. Wraps all the natives nicely in an OOP fashion.
+    Functions should be self-explanatory.
+
+"""
 from handle import *
 from ..df.commonj import *
 import math
@@ -76,7 +84,7 @@ class Effect(Handle):
     @color.setter
     def color(self, v):
         self.r, self.g, self.b, self.a = v  # this probably doesn't work in lua
-        self.setColor(self.r, self.g, self.b, self.a)
+        self.set_color(self.r, self.g, self.b, self.a)
 
     def set_color(self, r, g, b, a=-1):
         self.r, self.g, self.b = r, g, b

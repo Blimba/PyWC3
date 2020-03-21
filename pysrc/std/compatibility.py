@@ -1,4 +1,9 @@
 # --DO NOT INCLUDE--
+"""
+
+This script is here only for code completion reasons, to make python think it has access to the lua/wc3 functions
+
+"""
 def main():
     pass
 def config():

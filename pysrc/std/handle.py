@@ -1,3 +1,10 @@
+"""
+
+    Handle
+
+    A wrapper meant to collect the python object belonging to a blizzard 'handle'.
+
+"""
 class Handle:
     handles = {}
 

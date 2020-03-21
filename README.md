@@ -28,9 +28,11 @@ the scripting language used by Warcraft III. Install the pythonlua project using
 
 To start a new map project, open the World Editor (with a new map, or a map with only GUI triggers) like you normally 
 would, go to `Scenario > Map Options` and set `Scripting Language` to Lua. Save your map, making sure to select 
-`Warcraft III Scenario Folder (- Expansion)` as the format. Save this map to the `maps/` folder. Alternatively,
-you can use the `Warcraft III Scenario (- Expansion)` (MPQ) format as long as you have the 
-[MPQEDitor.exe](http://www.zezula.net/en/mpq/download.html) in the `mpqeditor` folder.
+`Warcraft III Scenario Folder - Expansion` as the format. Save this map to the `maps/` folder. Alternatively,
+you can use the `Warcraft III Scenario - Expansion` (MPQ) format as long as you have the 
+[MPQEDitor.exe](http://www.zezula.net/en/mpq/download.html) in the `mpqeditor` folder. Please make sure to use the 
+`Expansion` format as some things might not work with the original w3m, such as object editing. As everyone now has
+access to both Reign of Chaos and The Frozen Throne, there is no reason to use the w3m format.
 
 
 ### config.json  
