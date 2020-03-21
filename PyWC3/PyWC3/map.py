@@ -370,13 +370,21 @@ AddScriptHook({}, MAIN_AFTER)
                     os.mkdir('temp/src')
                 if not os.path.exists('temp/dist'):
                     os.mkdir('temp/dist')
-            shutil.copy(os.path.join(fn, 'war3map.lua'),'temp/src/war3map.lua')
-            shutil.copy(os.path.join(fn, 'war3map.doo'), 'temp/src/war3map.doo')
+            try:
+                shutil.copy(os.path.join(fn, 'war3map.lua'),'temp/src/war3map.lua')
+                shutil.copy(os.path.join(fn, 'war3map.doo'), 'temp/src/war3map.doo')
+            except: pass
+
         inf = 'temp/src/war3map.lua'
         print("Generating python definitions from map source: {}.".format(inf))
-        with open(inf, "r") as f:
-            for match in re.findall(r"^[\s]*(gg_[^\s]+) = (.+)$", "".join(f.readlines()), flags=re.MULTILINE):
-                gbls[match[0]] = match[1]
+        try:
+            with open(inf, "r") as f:
+                for match in re.findall(r"^[\s]*(gg_[^\s]+) = (.+)$", "".join(f.readlines()), flags=re.MULTILINE):
+                    gbls[match[0]] = match[1]
+        except:
+            print("Could not generate definitions, map does not have war3map.lua")
+            shutil.rmtree('temp')
+            return
         outf = "{}.py".format(os.path.join(self.cfg['PYTHON_SOURCE_FOLDER'], self.cfg['DEF_SUBFOLDER'], filename))
         with open(outf, "w") as f:
             f.write("# --DO NOT INCLUDE--\n")

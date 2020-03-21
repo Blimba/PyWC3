@@ -230,7 +230,7 @@ class ObjFile(DataFile):
 class DooFile(DataFile):
     flags = {
         'custom_z': int('100',2),
-        'visible': int('010',2),
+        'no_items': int('010',2),
         'invisible': int('001',2)
     }
     def __init__(self):
@@ -246,7 +246,7 @@ class DooFile(DataFile):
         sz = float(sz)
         var = int(var)
         if not flags:
-            flags = DooFile.flags['custom_z'] | DooFile.flags['visible']
+            flags = DooFile.flags['custom_z'] | DooFile.flags['no_items']
         flags = flags.to_bytes(1,'little')
         assert(isinstance(var,int))
         assert (isinstance(id, bytes))
@@ -273,10 +273,11 @@ class DooFile(DataFile):
             'sy': sy,
             'sz': sz,
             'idagain': id,
-            'ffff': b"\xFF\xFF\xFF\xFF",
+            'item_table_pointer': b"\xFF\xFF\xFF\xFF",
             'flags': flags,
             'life': life,
-            '0000': 0,
+            'num_itemsets': 0,
             'we_id': doos[-1]['we_id']+1,
+            'itemsets': [],
         }
         doos.append(doo)
