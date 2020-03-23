@@ -277,7 +277,8 @@ class DooFile(DataFile):
             'flags': flags,
             'life': life,
             'num_itemsets': 0,
-            'we_id': doos[-1]['we_id']+1,
             'itemsets': [],
         }
+        try: doo['we_id'] = doos[-1]['we_id']+1
+        except: doo['we_id'] = 0
         doos.append(doo)

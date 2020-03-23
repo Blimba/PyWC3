@@ -62,7 +62,6 @@ class PhysicsUnit(Unit,Particle):
                     v *= 0.5
                 self.position.subtract(v)
 
-
     def on_grounded(self):
         self.obj.move_speed = self.default_move_speed
 
@@ -93,7 +92,7 @@ class PhysicsUnit(Unit,Particle):
                 self.on_grounded()
         else:
             if self._terrain_flag:
-                if abs(self.terrain_point().z-self.position.z) > 5:
+                if abs(self.terrain_point().z-self.position.z) > 25:
                     self._terrain_flag = False
                     self.on_airborn()
 

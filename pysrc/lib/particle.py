@@ -78,8 +78,12 @@ class Particle(Cyclist):
         if len(Particle.collidables) > 0:
             for cobj in Particle.collidables:
                 if pos.x > cobj.minx and pos.x < cobj.maxx and pos.y > cobj.miny and pos.y < cobj.maxy:
-                    if cobj.maxz > tp.z and cobj.minz < (pos.z+self.height):
-                        tp.z = cobj.maxz
+                    maxz = cobj.maxz
+                    if hasattr(cobj,"get_maxz"): maxz = cobj.get_maxz(pos)
+                    minz = cobj.minz
+                    if hasattr(cobj,"get_minz"): minz = cobj.get_minz(pos)
+                    if maxz > tp.z and minz < (pos.z+self.height):
+                        tp.z = maxz
         return tp
 
     def update(self):
@@ -140,7 +144,6 @@ class Particle(Cyclist):
                     self.destroy()
         if self.dead == True:
             return None
-
 
     def update_graphics(self):
         if self.obj != None:

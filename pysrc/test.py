@@ -60,6 +60,23 @@ def test():
     Player.on_escape = lambda self, p: print(Player.color[GetPlayerId(p)] + GetPlayerName(p) + "|r has pressed escape.")
 
 
+def test2():
+    t = Triangle(
+        Vector3(150, 0, 150),
+        Vector3(-150, 150, 300),
+        Vector3(300, 300, 450)
+    ).show()
+
+    for p in [Vector3(150,150,400), Vector3(120,280,600),Vector3(350,150,500)]:
+        p.show()
+        cp = t.closest_point(p).permanent()
+        Line3(p,cp).show()
+        z = cp.z
+        if t.in_xy(p):
+            print('True')
+            z = t.xy2z(cp.x,cp.y)
+        Vector3(cp.x,cp.y,z).show()
 
 
-AddScriptHook(test,MAIN_AFTER)
+
+AddScriptHook(test2,MAIN_AFTER)
