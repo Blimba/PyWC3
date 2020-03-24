@@ -42,9 +42,16 @@ class PhysicsUnit(Unit,Particle):
         if impulse > 0:
             impulse = 1.05 / (1+math.exp((-impulse+200)/75.))
             self.obj.life = self.obj.life - impulse * self.obj.max_hp
-        self.velocity.subtract(prv)  # impulse normal penetration to velocity
-        friction = self.velocity * -0.8  # apply friction of the terrain to the unit velocity
-        self.velocity.add(friction)
+        if self.dead == False:
+            self.velocity.subtract(prv)  # impulse normal penetration to velocity
+            fc = 0.8 / (1+math.exp((-len(prv)+10)))
+            # print(fc)
+            friction = self.velocity *  -fc# apply friction of the terrain to the unit velocity
+            self.velocity.add(friction)
+
+    def on_death(self):
+        Particle.destroy(self)
+        Unit.destroy(self)
 
     def on_unithit(self,u):
         z = u.z

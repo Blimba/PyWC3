@@ -146,7 +146,7 @@ class Vector3:
         return Vector3(x,y,GetLocationZ(Vector3._loc),temp)
 
     @staticmethod
-    def terrain_normal(x,y,sampling=5):
+    def terrain_normal(x,y,sampling=2):
         x -= sampling / 2
         y -= sampling / 2
         p1 = Vector3.from_terrain(x,y,True)

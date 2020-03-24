@@ -79,9 +79,11 @@ class Particle(Cyclist):
             for cobj in Particle.collidables:
                 if pos.x > cobj.minx and pos.x < cobj.maxx and pos.y > cobj.miny and pos.y < cobj.maxy:
                     maxz = cobj.maxz
-                    if hasattr(cobj,"get_maxz"): maxz = cobj.get_maxz(pos)
+                    if hasattr(cobj,"get_maxz"):
+                        maxz = cobj.get_maxz(pos) or tp.z
                     minz = cobj.minz
-                    if hasattr(cobj,"get_minz"): minz = cobj.get_minz(pos)
+                    if hasattr(cobj,"get_minz"):
+                        minz = cobj.get_minz(pos) or tp.z
                     if maxz > tp.z and minz < (pos.z+self.height):
                         tp.z = maxz
         return tp
@@ -114,7 +116,7 @@ class Particle(Cyclist):
                         if self.velocity.z != self.velocity.z: self.velocity.z = 0
                         v = self.velocity * r  # could have changed during terrain collision!
                         self.position.add(v)
-            if callable(self.on_unithit):
+            if callable(self.on_unithit) and self.dead == False:
                 GroupEnumUnitsInRange(Particle._group, self.position.x, self.position.y, self.size+Particle.max_size, None)
                 # change to BlzGroupUnitAt? => yes, it is (sliiiightly) faster!
                 u = FirstOfGroup(Particle._group)
@@ -146,7 +148,7 @@ class Particle(Cyclist):
             return None
 
     def update_graphics(self):
-        if self.obj != None:
+        if self.obj != None and self.dead == False:
             if self.follow_direction == True and callable(self.obj.look_along):
                 self.obj.look_along(self.velocity.x, self.velocity.y, self.velocity.z)
             if callable(self.obj.set_position):
@@ -156,9 +158,6 @@ class Particle(Cyclist):
 
     def destroy(self):
         self.dead = True
-        if self.obj != None:
-            self.obj.destroy()
-            self.obj = None
         if (Particle._start == self):
             Particle._start = self._n
         self.exclude()
@@ -168,6 +167,9 @@ class Particle(Cyclist):
         self._p = None
         if (Particle._start == self):
             Particle._start = None
+        if self.obj != None and self.obj != self:
+            self.obj.destroy()
+            self.obj = None
 
     @staticmethod
     def _period():

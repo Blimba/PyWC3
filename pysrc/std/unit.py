@@ -257,9 +257,10 @@ class Unit(Handle):
             Handle.__init__(self, playerid)
         self._scale = 1.0
         self._timescale = 1.0
-    def destroy(self):
+    def destroy(self,hard=False):
         self.lose()
-        RemoveUnit(self._handle)
+        if hard:
+            RemoveUnit(self._handle)
 
     # use classes for indexed / id'd things
     # e.g.:
