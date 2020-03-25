@@ -13,7 +13,7 @@ class Grid2:
                 o = object.__new__(cls)
                 return o
         def __init__(self,parent_grid,x,y,X,Y):
-            self.parent = parent_grid
+            self.grid = parent_grid
             self.x = x
             self.y = y
             self.X = X
@@ -22,17 +22,17 @@ class Grid2:
             Grid2.Node.reuse.append(self)
 
         def up(self, wrap=False):
-            if not wrap and self.Y+1 >= self.parent.sY: return None
-            return self.parent[self.X,self.Y+1]
+            if not wrap and self.Y+1 >= self.grid.sY: return None
+            return self.grid[self.X,self.Y+1]
         def down(self, wrap=False):
             if not wrap and  self.Y <= 0: return None
-            return self.parent[self.X,self.Y-1]
+            return self.grid[self.X,self.Y-1]
         def left(self, wrap=False):
             if not wrap and  self.X <= 0: return None
-            return self.parent[self.X-1,self.Y]
+            return self.grid[self.X-1,self.Y]
         def right(self, wrap=False):
-            if not wrap and  self.X + 1 >= self.parent.sX: return None
-            return self.parent[self.X+1,self.Y]
+            if not wrap and  self.X + 1 >= self.grid.sX: return None
+            return self.grid[self.X+1,self.Y]
         def __str__(self):
             return "Node[{},{}] at x: {}, y: {}".format(self.X, self.Y, self.x, self.y)
 
@@ -68,8 +68,8 @@ class Grid2:
         self._offset.y = v.y
 
     def get_node(self,x,y):
-        X = math.floor(x / self.grid_interval)
-        Y = math.floor(y / self.grid_interval)
+        X = math.floor((x-self._offset.x) / self.grid_interval)
+        Y = math.floor((y-self._offset.y) / self.grid_interval)
         if X < 0 or Y < 0 or X >= self.sX or Y >= self.sY:
             return None
         return self.data[X][Y]
