@@ -2,9 +2,35 @@ import math
 from ..df.commonj import *
 
 class Vector2:
-    def __init__(self,x=0,y=0):
+    active = []
+    reuse = []
+    _fifo_buffer_size = 100  # this is the amount of temporary vectors used
+    _loc = None
+    def __new__(cls):
+        if len(Vector2.reuse) > Vector2._fifo_buffer_size:
+            o = Vector2.reuse.pop(0)
+            Vector2.active.append(o)
+            return o
+        else:
+            o = object.__new__(cls)
+            Vector2.active.append(o)
+            return o
+
+    def permanent(self):
+        if self not in Vector2.active:
+            Vector2.active.append(self)
+            Vector2.reuse.remove(self)
+        return self
+    def destroy(self):
+        if self not in Vector2.reuse:
+            Vector2.active.remove(self)
+            Vector2.reuse.append(self)
+
+    def __init__(self,x=0.0,y=0.0,temp=False):
         self.x = x
         self.y = y
+        if temp:
+            self.destroy()
 
     def distance(p1,p2):
         dx = p1.x-p2.x
@@ -21,21 +47,21 @@ class Vector2:
         '''
         return self.x*v.y - v.x*self.y
     def __add__(self, p):
-        return Vector2(self.x + p.x, self.y + p.y)
+        return Vector2(self.x + p.x, self.y + p.y,True)
     def __sub__(self, p):
-        return Vector2(self.x - p.x, self.y - p.y)
+        return Vector2(self.x - p.x, self.y - p.y,True)
 
     def __mul__(self, other):
         if isinstance(other,float):
-            return Vector2(self.x*other, self.y*other)
+            return Vector2(self.x*other, self.y*other,True)
         elif isinstance(other, Vector2):
-            return Vector2(self.x*other.x, self.y*other.y)
+            return Vector2(self.x*other.x, self.y*other.y,True)
 
     def __truediv__(self, other):
         if isinstance(other,float):
-            return Vector2(self.x/other, self.y/other)
+            return Vector2(self.x/other, self.y/other,True)
         elif isinstance(other,Vector2):
-            return Vector2(self.x/other.x, self.y/other.y)
+            return Vector2(self.x/other.x, self.y/other.y,True)
 
     def __len__(self):
         return math.sqrt(self.x*self.x+self.y*self.y)

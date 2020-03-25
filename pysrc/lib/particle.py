@@ -79,10 +79,10 @@ class Particle(Cyclist):
             for cobj in Particle.collidables:
                 if pos.x > cobj.minx and pos.x < cobj.maxx and pos.y > cobj.miny and pos.y < cobj.maxy:
                     maxz = cobj.maxz
-                    if hasattr(cobj,"get_maxz"):
+                    if callable(cobj.get_maxz):
                         maxz = cobj.get_maxz(pos) or tp.z
                     minz = cobj.minz
-                    if hasattr(cobj,"get_minz"):
+                    if callable(cobj.get_minz):
                         minz = cobj.get_minz(pos) or tp.z
                     if maxz > tp.z and minz < (pos.z+self.height):
                         tp.z = maxz
@@ -193,5 +193,3 @@ class Particle(Cyclist):
 
 
 AddScriptHook(Particle._Start,MAIN_BEFORE)
-
-

@@ -18,12 +18,14 @@ class Vector3:
             return o
 
     def permanent(self):
-        Vector3.active.append(self)
-        Vector3.reuse.remove(self)
+        if self not in Vector3.active:
+            Vector3.active.append(self)
+            Vector3.reuse.remove(self)
         return self
     def destroy(self):
-        Vector3.active.remove(self)
-        Vector3.reuse.append(self)
+        if self not in Vector3.reuse:
+            Vector3.active.remove(self)
+            Vector3.reuse.append(self)
 
     @staticmethod
     def stats():
