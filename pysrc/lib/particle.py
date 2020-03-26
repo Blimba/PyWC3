@@ -5,9 +5,9 @@ from .cyclist import *
 from ..std.timer import *
 from ..std.unit import *
 class Force(Vector3):
-    def __init__(self,x,y,z):
+    def __init__(self, x, y, z):
         self.active = True
-        Vector3.__init__(self,x,y,z)
+        Vector3.__init__(self, x, y, z)
     def __str__(self):
         return "Force x: "+str(self.x)+", y: "+str(self.y)+", z: "+str(self.z)
     def calculate(self,particle):
@@ -62,19 +62,27 @@ class Particle(Cyclist):
         self.on_timeout = None
         self.height = 0
 
-    def collision_normal(self,pos=None):
+    def collided(self,pos=None):
         if pos == None: pos = self.position
         if Vector3.from_terrain(pos.x, pos.y, True).z > pos.z:
-            return Vector3.terrain_normal(pos.x, pos.y)
+            return True
         if len(Particle.collidables) > 0:
             for cobj in Particle.collidables:
                 if pos in cobj:
-                    return cobj.normal(pos)
-        return None
+                    self.collision_object = cobj
+                    return True
+        return False
+
+    def collision_normal(self,pos=None):
+        if pos == None: pos = self.position
+        if self.collision_object:
+            return self.collision_object.normal(pos)
+        return Vector3.terrain_normal(pos.x, pos.y)
 
     def terrain_point(self,pos=None):
         if pos == None: pos = self.position
         tp = Vector3.from_terrain(pos.x,pos.y, True)
+        o = None
         if len(Particle.collidables) > 0:
             for cobj in Particle.collidables:
                 if pos.x > cobj.minx and pos.x < cobj.maxx and pos.y > cobj.miny and pos.y < cobj.maxy:
@@ -85,7 +93,9 @@ class Particle(Cyclist):
                     if callable(cobj.get_minz):
                         minz = cobj.get_minz(pos) or tp.z
                     if maxz > tp.z and minz < (pos.z+self.height):
+                        o = cobj
                         tp.z = maxz
+        self.collision_object = o
         return tp
 
     def update(self):
@@ -105,17 +115,19 @@ class Particle(Cyclist):
             # if the object doesn't have a terrainhit function, don't do the collision checking.
             if callable(self.on_terrainhit):
                 # get the normal from the function
-                normal = self.collision_normal()
-                if normal != None:
+                if self.collided():
+                    # should probably implement the following better...
+                    if self.collision_object != None and hasattr(self.collision_object,"velocity"):
+                        self.position.add(self.collision_object.velocity * r)
                     self.position.subtract(v)
-                    self.on_terrainhit(normal)
+                    n = self.collision_normal()
+                    self.on_terrainhit(n)
                     if self.dead == False:
                         # certain weird things might cause a nan. Catch it and fix
-                        if self.velocity.x != self.velocity.x: self.velocity.x = 0
-                        if self.velocity.y != self.velocity.y: self.velocity.y = 0
-                        if self.velocity.z != self.velocity.z: self.velocity.z = 0
+                        self.velocity.fixnan()
                         v = self.velocity * r  # could have changed during terrain collision!
                         self.position.add(v)
+
             if callable(self.on_unithit) and self.dead == False:
                 GroupEnumUnitsInRange(Particle._group, self.position.x, self.position.y, self.size+Particle.max_size, None)
                 # change to BlzGroupUnitAt? => yes, it is (sliiiightly) faster!

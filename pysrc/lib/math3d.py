@@ -7,7 +7,7 @@ class Vector3:
     reuse = []
     _fifo_buffer_size = 1000  # this is the amount of temporary vectors used
     _loc = None
-    def __new__(cls):
+    def __new__(cls,x=0.0,y=0.0,z=0.0,temp=False):
         if len(Vector3.reuse) > Vector3._fifo_buffer_size:
             o = Vector3.reuse.pop(0)
             Vector3.active.append(o)
@@ -26,6 +26,11 @@ class Vector3:
         if self not in Vector3.reuse:
             Vector3.active.remove(self)
             Vector3.reuse.append(self)
+    def fixnan(self):
+        if self.x != self.x: self.x = 0.0
+        if self.y != self.y: self.y = 0.0
+        if self.z != self.z: self.z = 0.0
+        return self
 
     @staticmethod
     def stats():
@@ -120,9 +125,14 @@ class Vector3:
         x = str(self.x)
         y = str(self.y)
         z = str(self.z)
-        if "." in x: x = x[:x.find(r'.')+2]
-        if "." in y: y = y[:y.find(r'.')+2]
-        if "." in z: z = z[:z.find(r'.')+2]
+        # if 'e' in x:
+        #     if "." in x: x = x[:x.find(r'.')+2] + x[x.find('e'):]
+        #     if "." in y: y = y[:y.find(r'.')+2] + y[y.find('e'):]
+        #     if "." in z: z = z[:z.find(r'.')+2] + z[z.find('e'):]
+        # else:
+        #     if "." in x: x = x[:x.find(r'.')+2]
+        #     if "." in y: y = y[:y.find(r'.')+2]
+        #     if "." in z: z = z[:z.find(r'.')+2]
         return "Vector3 x: "+x+", y: "+y+", z: "+z
 
     def normalize(self):
@@ -363,5 +373,4 @@ class Box:
         return bp.distance(p)
 
     def normal(self,p):
-        n = self.closest_point(p).subtract(p).normalize()
-        return n
+        return self.closest_point(p).subtract(p).normalize()

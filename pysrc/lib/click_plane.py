@@ -17,7 +17,6 @@ class ClickPlane(Rectangle, Cyclist):
         Rectangle.__init__(self, minx, miny, maxx, maxy)
         Cyclist.__init__(self)
         self.z = z
-
         # make a sorted list
         if ClickPlane._node1 == None:
             ClickPlane._node1 = self
@@ -64,14 +63,22 @@ class ClickPlane(Rectangle, Cyclist):
             if node == ClickPlane._node1: break
 
         # Check if we're increasing our coordinates above another
-        node = self.prev
-        while z > node.z:
-            nnode = node.prev
-            node.swap_next()
-            if node == ClickPlane._node1:
-                ClickPlane._node1 = self
-                break
-            node = nnode
+        if ClickPlane._node1 != self:
+            node = self.prev
+            while z > node.z:
+                nnode = node.prev
+                node.swap_next()
+                if node == ClickPlane._node1:
+                    ClickPlane._node1 = self
+                    break
+                node = nnode
+
+    def destroy(self):
+        if self == ClickPlane._node1:
+            ClickPlane._node1 = self.next
+        self.exclude()
+        if self == ClickPlane._node1:
+            ClickPlane._node1 = None
 
     @staticmethod
     def print_list():

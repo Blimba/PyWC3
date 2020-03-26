@@ -20,7 +20,6 @@ class PhysicsUnit(Unit,Particle):
     def __init__(self,playerid,unitid,x,y,face=0.0,skinid=0):
         Unit.__init__(self,playerid,unitid,x,y,face,skinid)
         Particle.__init__(self,self,Vector3(0,0,0),10,False,1,BlzGetUnitCollisionSize(self._handle))
-        # assert (isinstance(self.obj, Unit))
         UnitAddAbility(self._handle,FourCC('Amrf'))
         UnitRemoveAbility(self._handle,FourCC('Amrf'))
         self.forces.append(G)
@@ -45,9 +44,9 @@ class PhysicsUnit(Unit,Particle):
         if self.dead == False:
             self.velocity.subtract(prv)  # impulse normal penetration to velocity
             fc = 0.8 / (1+math.exp((-len(prv)+10)))
-            # print(fc)
             friction = self.velocity *  -fc# apply friction of the terrain to the unit velocity
             self.velocity.add(friction)
+
 
     def on_death(self):
         Particle.destroy(self)
@@ -83,10 +82,14 @@ class PhysicsUnit(Unit,Particle):
         self.position.x = self.obj.x
         self.position.y = self.obj.y
         tp = self.terrain_point()
+        # should probably implement the following better...
+        if self.collision_object != None and hasattr(self.collision_object, "velocity"):
+            self.walking_velocity.subtract(self.collision_object.velocity * Particle.period / self.collision_sampling)
+
         if tp.z > self.position.z:
             self._onterrain = True
             self.on_walk_terrainhit(self.walking_velocity,self.position-tp)
-            self.position.z = self.terrain_point().z
+            self.position.z = self.terrain_point().z+0.1
         for offset in PhysicsUnit.offsets:
             np = self.position+offset
             tp = self.terrain_point(np)
@@ -94,14 +97,14 @@ class PhysicsUnit(Unit,Particle):
                 self.on_walk_terrainhit(offset*(len(self.walking_velocity)/len(offset)),np - tp)
         Particle.update(self)
         if self._onterrain:
-            if not self._terrain_flag:
-                self._terrain_flag = True
-                self.on_grounded()
+            if len(self.velocity) < 20:
+                if not self._terrain_flag:
+                    self._terrain_flag = True
+                    self.on_grounded()
         else:
             if self._terrain_flag:
                 if abs(self.terrain_point().z-self.position.z) > 25:
                     self._terrain_flag = False
                     self.on_airborn()
-
 
 
