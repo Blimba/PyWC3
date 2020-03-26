@@ -8,7 +8,8 @@ class Astar_Node(Grid2.Node,Cyclist):
         Grid2.Node.__init__(self,grid,x,y,X,Y)
         Cyclist.__init__(self)
         self.z = z
-        self.fx = r"UI\\Feedback\\Selectioncircle\\selectioncircle.mdl"
+        self._fx = None
+        # self.fx = r"UI\\Feedback\\Selectioncircle\\selectioncircle.mdl"
         self.open = grid.is_pathableXY(X,Y)
         self.parent = None
         self.f = -1
@@ -17,7 +18,7 @@ class Astar_Node(Grid2.Node,Cyclist):
 
 
     def visit(self,from_node,g):
-        self.fx = r"UI\\Feedback\\WaypointFlags\\UndeadWaypointFlag.mdl"
+        # self.fx = r"UI\\Feedback\\WaypointFlags\\UndeadWaypointFlag.mdl"
         if(self.parent == None or g < self.g):
             self.parent = from_node
             from_node.following = self
@@ -35,9 +36,10 @@ class Astar_Node(Grid2.Node,Cyclist):
         self._fx = Effect(self.x+self.grid.grid_interval/2, self.y+self.grid.grid_interval/2, self.z, path)
         self._fx.scale = 0.5
     def destroy(self):
-        Grid2.Node.destroy()
-        self._fx.destroy()
-        self._fx = None
+        Grid2.Node.destroy(self)
+        if self._fx != None:
+            self._fx.destroy()
+            self._fx = None
 
     def get_neighbours(self):
         neighbours = [self.up(), self.right(), self.down(), self.left()]
@@ -66,12 +68,12 @@ class Astar_Grid(Grid2):
         start = current
         start.f = self.heuristic(current,goal)
         start.g = 0
-        start.fx = r"UI\\Feedback\\WaypointFlags\\NightElfWaypointFlag.mdl"
-        goal.fx = r"UI\\Feedback\\WaypointFlags\\NightElfWaypointFlag.mdl"
+        # start.fx = r"UI\\Feedback\\WaypointFlags\\NightElfWaypointFlag.mdl"
+        # goal.fx = r"UI\\Feedback\\WaypointFlags\\NightElfWaypointFlag.mdl"
         sorter = None
         while(current != None):
             current.open = False
-            current.fx = r"UI\\Feedback\\WaypointFlags\\WaypointFlag.mdl"
+            # current.fx = r"UI\\Feedback\\WaypointFlags\\WaypointFlag.mdl"
             current.neighbours = current.get_neighbours()
             while True:
                 if (current == goal): break
@@ -121,4 +123,4 @@ class Astar:
         while (best != None and best.parent != None):
             best.fx = r"UI\\Feedback\\WaypointFlags\\OrcWaypointFlag.mdl"
             best = best.parent
-        ITimer.start(0,Astar_Grid.destroy,g)
+        g.destroy()
