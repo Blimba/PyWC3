@@ -581,6 +581,9 @@ class Unit(Handle):
     def get_damage_source():
         return Handle.get(GetEventDamageSource()) or Unit(GetEventDamageSource)
 
+    @staticmethod
+    def get_caster():
+        return Handle.get(GetSpellAbilityUnit()) or Unit(GetSpellAbilityUnit)
 
     # Automatically generated get unit functions
 
