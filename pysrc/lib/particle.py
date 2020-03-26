@@ -8,12 +8,14 @@ class Force(Vector3):
     def __init__(self, x, y, z):
         self.active = True
         Vector3.__init__(self, x, y, z)
+
     def __str__(self):
         return "Force x: "+str(self.x)+", y: "+str(self.y)+", z: "+str(self.z)
     def calculate(self,particle):
         return self
     def destroy(self):
         self.active = False
+        Vector3.destroy(self)
 
 G = Force(0,0,-2000)
 def G_func(self,particle):
