@@ -279,12 +279,21 @@ class Unit(Handle):
 
     # order functions
     def order(self, o, *args):
-        if len(args) == 0:
-            IssueImmediateOrder(self._handle, o)
-        elif len(args) == 1:
-            IssueTargetOrder(self._handle, o, args[0])
-        elif len(args) == 2:
-            IssuePointOrder(self._handle, o, args[0], args[1])
+        if isinstance(o,str):
+            if len(args) == 0:
+                IssueImmediateOrder(self._handle, o)
+            elif len(args) == 1:
+                IssueTargetOrder(self._handle, o, args[0])
+            elif len(args) == 2:
+                IssuePointOrder(self._handle, o, args[0], args[1])
+        else:
+            if len(args) == 0:
+                IssueImmediateOrderById(self._handle, o)
+            elif len(args) == 1:
+                IssueTargetOrderById(self._handle, o, args[0])
+            elif len(args) == 2:
+                IssuePointOrderById(self._handle, o, args[0], args[1])
+
 
     def use_item(self, i, *args):
         if len(args) == 0:
