@@ -125,14 +125,9 @@ class Vector3:
         x = str(self.x)
         y = str(self.y)
         z = str(self.z)
-        # if 'e' in x:
-        #     if "." in x: x = x[:x.find(r'.')+2] + x[x.find('e'):]
-        #     if "." in y: y = y[:y.find(r'.')+2] + y[y.find('e'):]
-        #     if "." in z: z = z[:z.find(r'.')+2] + z[z.find('e'):]
-        # else:
-        #     if "." in x: x = x[:x.find(r'.')+2]
-        #     if "." in y: y = y[:y.find(r'.')+2]
-        #     if "." in z: z = z[:z.find(r'.')+2]
+        if "." in x: x = x[:x.find(r'.')+2]
+        if "." in y: y = y[:y.find(r'.')+2]
+        if "." in z: z = z[:z.find(r'.')+2]
         return "Vector3 x: "+x+", y: "+y+", z: "+z
 
     def normalize(self):
