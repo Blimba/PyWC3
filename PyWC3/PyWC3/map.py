@@ -127,7 +127,7 @@ class Map:
                         self.objeditor(c)
                 except FileNotFoundError:
                     raise SystemError("ObjEditor json file {} not found in {}!".format(fn,os.getcwd()))
-        for fn in re.findall("^\s*#RunPy=([\S]+?)\s*$", content, flags=re.MULTILINE):
+        for fn in re.findall("^\s*#\s*RunPy=([\S]+?)\s*$", content, flags=re.MULTILINE):
             if fn.split('.')[-1] == "py":
                 fn = fn.split('.')[0].replace("\\",".")
                 try: imp = importlib.import_module(fn)
@@ -328,6 +328,7 @@ class Map:
         with open(fn,"w") as f:
             print("Generating python script {}...".format(fn))
             f.write("""from std.index import *
+from {}.{} import *
             
             
 def {}():
@@ -335,7 +336,7 @@ def {}():
     
     
 AddScriptHook({}, MAIN_AFTER)
-""".format(filename,filename))
+""".format(self.cfg['DEF_SUBFOLDER'],filename,filename,filename))
 
     def generate_definitions_file(self):
         gbls = {}
