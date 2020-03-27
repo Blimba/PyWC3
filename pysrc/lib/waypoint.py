@@ -4,7 +4,7 @@ from ..std.unit import *
 from .math2d import *
 from ..std.timer import *
 class Waypoint(Vector2,Cyclist):
-    range = 10
+    range = 32
     def __init__(self,x,y,temp=False):
         Vector2.__init__(self,x,y)
         Cyclist.__init__(self)
@@ -42,9 +42,12 @@ class WaypointUnit(Unit,Cyclist):
         self.order("move",wp.x,wp.y)
 
     def check(self):
-        if self.waypoint != None and (self.waypoint.reached(self) or self.current_order == OrderId("idle")):
-            self.waypoint = self.waypoint.next
-            self.go_to()
+        if self.waypoint != None:
+            if self.current_order == OrderId("idle"):
+                self.go_to()
+            if self.waypoint.reached(self):
+                self.waypoint = self.waypoint.next
+                self.go_to()
 
     def destroy(self,hard=False):
         if (WaypointUnit._start == self):
