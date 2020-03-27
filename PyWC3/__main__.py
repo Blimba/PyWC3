@@ -24,6 +24,10 @@ def create_arg_parser():
                         dest="initpy", action="store_true")
     parser.add_argument("--mpq", help="Save map as mpq.",
                         dest="mpq", action="store_true")
+    parser.add_argument("--fullscreen", help="Add to make --run run the game in fullscreen.",
+                        dest="fullscreen", action="store_true")
+    parser.add_argument("--windowed", help="Add to make --run run the game in windowed.",
+                        dest="windowed", action="store_true")
     return parser
 
 def main():
@@ -53,6 +57,10 @@ def main():
 
         if argv.run:
             print("Running Warcraft III <{}>".format(m.file))
+            if argv.fullscreen:
+                m.cfg['WINDOWMODE'] = 'fullscreen'
+            elif argv.windowed:
+                m.cfg['WINDOWMODE'] = 'windowed'
             m.run()
 
         if argv.edit:
