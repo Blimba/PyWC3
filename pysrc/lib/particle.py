@@ -129,6 +129,8 @@ class Particle(Cyclist):
                         self.velocity.fixnan()
                         v = self.velocity * r  # could have changed during terrain collision!
                         self.position.add(v)
+                    else:
+                        break
 
             if callable(self.on_unithit) and self.dead == False:
                 GroupEnumUnitsInRange(Particle._group, self.position.x, self.position.y, self.size+Particle.max_size, None)
@@ -148,8 +150,13 @@ class Particle(Cyclist):
                                     if self.velocity.z != self.velocity.z: self.velocity.z = 0
                                     v = self.velocity * r  # could have changed during unit hit!
                                     self.position.add(v)
+                                else:
+                                    GroupClear(Particle._group)
+                                    break
                     GroupRemoveUnit(Particle._group, u)
                     u = FirstOfGroup(Particle._group)
+        if self.dead == True:
+            return None
         # handle timing
         self.time += Particle.period
         if isinstance(self.timeout,float):
@@ -158,8 +165,7 @@ class Particle(Cyclist):
                     self.on_timeout()
                 else:
                     self.destroy()
-        if self.dead == True:
-            return None
+
 
     def update_graphics(self):
         if self.obj != None and self.dead == False:

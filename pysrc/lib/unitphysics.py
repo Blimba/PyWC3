@@ -96,15 +96,16 @@ class PhysicsUnit(Unit,Particle):
             if tp.z > np.z:
                 self.on_walk_terrainhit(offset*(len(self.walking_velocity)/len(offset)),np - tp)
         Particle.update(self)
-        if self._onterrain:
-            if len(self.velocity) < 20:
-                if not self._terrain_flag:
-                    self._terrain_flag = True
-                    self.on_grounded()
-        else:
-            if self._terrain_flag:
-                if abs(self.terrain_point().z-self.position.z) > 25:
-                    self._terrain_flag = False
-                    self.on_airborn()
+        if self.dead == False:
+            if self._onterrain:
+                if len(self.velocity) < 20:
+                    if not self._terrain_flag:
+                        self._terrain_flag = True
+                        self.on_grounded()
+            else:
+                if self._terrain_flag:
+                    if abs(self.terrain_point().z-self.position.z) > 25:
+                        self._terrain_flag = False
+                        self.on_airborn()
 
 
