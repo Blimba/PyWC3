@@ -98,7 +98,7 @@ class ClickPlane(Rectangle, Cyclist):
     def _cam_sync(camera, clickpoint, unit, order_id):
         try:
             node = ClickPlane._node1
-            while True:
+            while node != None:
                 if node.obscured(clickpoint, camera):
                     # ClickPlane.ignore_next = True
                     IssuePointOrderById(unit, order_id, node.redirect.x, node.redirect.y)
