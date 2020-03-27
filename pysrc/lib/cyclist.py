@@ -34,6 +34,13 @@ class Cyclist:
             self._p = self._n  # (a._p = b)
             self._n._n, self._n = self, self._n._n  # (b._n = a)
 
+    def swap(self,other):
+        n1 = self._n
+        n2 = other._n
+        self.exclude()
+        other.exclude()
+        if(n1 != self): n1.prev = other
+        if(n2 != other): n2.prev = self
 
     def swap_prev(self):
         self._p.swap_next()
