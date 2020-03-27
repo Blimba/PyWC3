@@ -6,7 +6,7 @@ class Vector2:
     reuse = []
     _fifo_buffer_size = 100  # this is the amount of temporary vectors used
     _loc = None
-    def __new__(cls):
+    def __new__(cls,x=0.0,y=0.0,temp=False):
         if len(Vector2.reuse) > Vector2._fifo_buffer_size:
             o = Vector2.reuse.pop(0)
             Vector2.active.append(o)
