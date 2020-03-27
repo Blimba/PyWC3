@@ -6,95 +6,11 @@ from index import *
 import math
 from event import *
 """
-not implementing:
-ConvertUnitState
-ConvertPlayerUnitEvent
-ConvertUnitEvent
-ConvertUnitType
-ConvertUnitIntegerField
-ConvertUnitRealField
-ConvertUnitBooleanField
-ConvertUnitStringField
-ConvertUnitWeaponIntegerField
-ConvertUnitWeaponRealField
-ConvertUnitWeaponBooleanField
-ConvertUnitWeaponStringField
-ConvertUnitCategory
 
-GroupEnumUnitsOfTypeCounted
-GroupEnumUnitsInRectCounted
-GroupEnumUnitsInRangeOfLoc
-GroupEnumUnitsInRangeCounted
-GroupEnumUnitsInRangeOfLocCounted
+    A wrapper for blizzard's units
+    
+    Methods should be self-explanatory
 
-UnitStripHeroLevel
-UnitModifySkillPoints
-DecUnitAbilityLevel
-IncUnitAbilityLevel
-SetUnitExploded
-SetUnitInvulnerable
-GetUnitPointValueByType
-UnitAddItemById
-UnitHasItem
-UnitDropItemSlot
-GetUnitLoc
-GetUnitDefaultMoveSpeed
-GetUnitRallyPoint
-GetUnitRallyUnit
-GetUnitRallyDestructable
-IsUnitInGroup
-IsUnitInForce
-IsUnitOwnedByPlayer
-IsUnitDetected
-IsUnitFogged
-IsUnitMasked
-IsUnitInRange
-IsUnitInRangeXY
-IsUnitInRangeLoc
-IsHeroUnitId
-IsUnitIdType
-AddUnitToAllStock
-AddUnitToStock
-RemoveUnitFromAllStock
-RemoveUnitFromStock
-SetAllUnitTypeSlots
-SetUnitTypeSlots
-GetPlayerUnitCount
-GetPlayerTypedUnitCount
-SetPlayerUnitsOwner
-StoreUnit					
-SyncStoredUnit
-HaveStoredUnit					
-FlushStoredUnit					
-RestoreUnit					
-SaveUnitHandle				
-SaveUnitPoolHandle			
-LoadUnitHandle			
-LoadUnitPoolHandle		
-CreateUnitPool
-DestroyUnitPool
-UnitPoolAddUnitType
-UnitPoolRemoveUnitType
-PlaceRandomUnit
-SetUnitFog
-CreateMinimapIconOnUnit
-SetTextTagPosUnit
-AttachSoundToUnit
-
-GroupAddUnit
-BlzGroupUnitAt
-IsUnitInRegion
-
-CreateUnitByName
-CreateUnitAtLoc
-CreateUnitAtLocByName
-SetUnitPosition
-SetUnitPositionLoc
-SetUnitFacingTimed
-SetUnitCreepGuard
-
-
-BlzGetLocalUnitZ
 """
 
 class PlayerUnitEvent(ClassEvent):

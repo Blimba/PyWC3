@@ -2,7 +2,47 @@ from .index import *
 from .handle import *
 from .event import *
 from .unit import *
+"""
 
+    A region class to make working with rects / regions simple
+    
+    Generating a region:
+    
+        r = Region()  # optionally, we can supply hysteresis as an argument, see below
+        
+    Adding rects:
+        
+        r.append_rect(gg_rct_Region000)  # append a preplaced rect from the editor
+        r.append_rect(Rect(-64,-64,64,64))  # or create a new one
+        
+    For enter and leave events, we simply have to give it a function:
+    
+        def enter(region,unit):
+            if(GetUnitTypeId(unit) == b'hfoo'):
+                # only footmen are counted in this region
+                return True
+            return False
+
+        def leave(region,unit):
+            # because we only 'allow' footman in the region, the type of unit is certainly a footman
+            print(unit.name,'leaving the region')
+        # now, actually put those functions on the region  
+        r.on_enter = enter
+        r.on_exit = leave
+        
+    Hysteresis:
+    
+    Sometimes we want the leave event to not be quite the same as when we entered the rect. That's why we can have an
+    additional rect that acts as the 'unit leaves' event instead. It couldn't be simpler to implement:
+    
+    r = Region(128.0)
+    r.append_rect(Rect(-64,-64,64,64))
+    r.on_enter = enter
+    r.on_exit = leave
+    
+    now the 'exit' fires 128 outside of the original rect in all directions.
+
+"""
 class RegionEvent(ClassEvent):
     enter = 0
     exit = 1

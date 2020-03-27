@@ -1,3 +1,26 @@
+"""
+
+    An easy event for spells.
+
+    Usage:
+
+    def ability_cast(se, caster):
+        print(caster,'cast spell A001')
+    se = SpellEvent(b'A001')  # replace A001 with your ability code
+    se.on_cast = ability_cast
+
+    All events are equally available:
+
+    - on_cast (corresponds to EVENT_PLAYER_UNIT_SPELL_CAST)
+    - on_channel (corresponds to EVENT_PLAYER_UNIT_SPELL_CHANNEL)
+    - on_finish (corresponds to EVENT_PLAYER_UNIT_SPELL_FINISH)
+    - on_endcast (corresponds to EVENT_PLAYER_UNIT_SPELL_ENDCAST)
+    - on_effects (corresponds to EVENT_PLAYER_UNIT_SPELL_EFFECT)
+
+    Be advised that only 1 SpellEvent instance of the same ability may exist.
+
+"""
+
 from index import *
 from event import *
 from unit import *

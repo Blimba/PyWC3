@@ -1,6 +1,21 @@
 from handle import *
 from ..df.commonj import *
+"""
 
+    A wrapper for the blizzard timers
+    
+    Usage:
+    
+    def timeout():
+        t = Timer.get_expired()
+        print(t.data)
+        t.destroy()
+    t = Timer()
+    # do whatever you want with, such as attach things that we can use on timeout
+    t.data = 5
+    t.start(1.0, timeout)
+
+"""
 class Timer(Handle):
     def __init__(self,periodic=False):
         self.periodic = periodic
