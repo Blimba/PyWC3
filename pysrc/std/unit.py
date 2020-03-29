@@ -166,18 +166,21 @@ class Unit(Handle):
             if isinstance(unitid, str):
                 unitid = FourCC(unitid)
             if (skinid != None):
-                Handle.__init__(self, BlzCreateUnitWithSkin, Player(playerid), unitid, x, y, face, skinid)
+                Handle.__init__(self, BlzCreateUnitWithSkin(Player(playerid), unitid, x, y, face, skinid))
             else:
-                Handle.__init__(self, CreateUnit, Player(playerid), unitid, x, y, face)
+                Handle.__init__(self, CreateUnit(Player(playerid), unitid, x, y, face))
         else: # assume a unit, or a simple unit returning function (e.g., GetTriggerUnit) is passed.
             Handle.__init__(self, playerid)
         self._scale = 1.0
         self._timescale = 1.0
     def destroy(self,hard=False):
-        self.lose()
+        Handle.destroy(self)
         if hard:
             RemoveUnit(self._handle)
 
+    @staticmethod
+    def get(handle):
+        return Handle.get(handle) or Unit(handle)
     # use classes for indexed / id'd things
     # e.g.:
     # abil = unitinstance.ability('A001')
@@ -496,146 +499,146 @@ class Unit(Handle):
     # get unit functions
     @staticmethod
     def get_attacker():
-        return Handle.get(GetAttacker()) or Unit(GetAttacker)
+        return Unit.get(GetAttacker())
 
     @staticmethod
     def get_rescuer():
-        return Handle.get(GetRescuer()) or Unit(GetRescuer)
+        return Unit.get(GetRescuer())
 
     @staticmethod
     def get_damage_source():
-        return Handle.get(GetEventDamageSource()) or Unit(GetEventDamageSource)
+        return Unit.get(GetEventDamageSource())
 
     @staticmethod
     def get_caster():
-        return Handle.get(GetSpellAbilityUnit()) or Unit(GetSpellAbilityUnit)
+        return Unit.get(GetSpellAbilityUnit())
 
     # Automatically generated get unit functions
 
 
     @staticmethod
     def get_filter():
-        return Handle.get(GetFilterUnit()) or Unit(GetFilterUnit)
+        return Unit.get(GetFilterUnit())
 
     @staticmethod
     def get_enum():
-        return Handle.get(GetEnumUnit()) or Unit(GetEnumUnit)
+        return Unit.get(GetEnumUnit())
 
     @staticmethod
     def get_entering():
-        return Handle.get(GetEnteringUnit()) or Unit(GetEnteringUnit)
+        return Unit.get(GetEnteringUnit())
 
     @staticmethod
     def get_leaving():
-        return Handle.get(GetLeavingUnit()) or Unit(GetLeavingUnit)
+        return Unit.get(GetLeavingUnit())
 
     @staticmethod
     def get_leveling():
-        return Handle.get(GetLevelingUnit()) or Unit(GetLevelingUnit)
+        return Unit.get(GetLevelingUnit())
 
     @staticmethod
     def get_learning():
-        return Handle.get(GetLearningUnit()) or Unit(GetLearningUnit)
+        return Unit.get(GetLearningUnit())
 
     @staticmethod
     def get_revivable():
-        return Handle.get(GetRevivableUnit()) or Unit(GetRevivableUnit)
+        return Unit.get(GetRevivableUnit())
 
     @staticmethod
     def get_reviving():
-        return Handle.get(GetRevivingUnit()) or Unit(GetRevivingUnit)
+        return Unit.get(GetRevivingUnit())
 
     @staticmethod
     def get_dying():
-        return Handle.get(GetDyingUnit()) or Unit(GetDyingUnit)
+        return Unit.get(GetDyingUnit())
 
     @staticmethod
     def get_killing():
-        return Handle.get(GetKillingUnit()) or Unit(GetKillingUnit)
+        return Unit.get(GetKillingUnit())
 
     @staticmethod
     def get_decaying():
-        return Handle.get(GetDecayingUnit()) or Unit(GetDecayingUnit)
+        return Unit.get(GetDecayingUnit())
 
     @staticmethod
     def get_researching():
-        return Handle.get(GetResearchingUnit()) or Unit(GetResearchingUnit)
+        return Unit.get(GetResearchingUnit())
 
     @staticmethod
     def get_trained():
-        return Handle.get(GetTrainedUnit()) or Unit(GetTrainedUnit)
+        return Unit.get(GetTrainedUnit())
 
     @staticmethod
     def get_detected():
-        return Handle.get(GetDetectedUnit()) or Unit(GetDetectedUnit)
+        return Unit.get(GetDetectedUnit())
 
     @staticmethod
     def get_summoning():
-        return Handle.get(GetSummoningUnit()) or Unit(GetSummoningUnit)
+        return Unit.get(GetSummoningUnit())
 
     @staticmethod
     def get_summoned():
-        return Handle.get(GetSummonedUnit()) or Unit(GetSummonedUnit)
+        return Unit.get(GetSummonedUnit())
 
     @staticmethod
     def get_transport():
-        return Handle.get(GetTransportUnit()) or Unit(GetTransportUnit)
+        return Unit.get(GetTransportUnit())
 
     @staticmethod
     def get_loaded():
-        return Handle.get(GetLoadedUnit()) or Unit(GetLoadedUnit)
+        return Unit.get(GetLoadedUnit())
 
     @staticmethod
     def get_selling():
-        return Handle.get(GetSellingUnit()) or Unit(GetSellingUnit)
+        return Unit.get(GetSellingUnit())
 
     @staticmethod
     def get_sold():
-        return Handle.get(GetSoldUnit()) or Unit(GetSoldUnit)
+        return Unit.get(GetSoldUnit())
 
     @staticmethod
     def get_buying():
-        return Handle.get(GetBuyingUnit()) or Unit(GetBuyingUnit)
+        return  Unit.get(GetBuyingUnit())
 
     @staticmethod
     def get_changing():
-        return Handle.get(GetChangingUnit()) or Unit(GetChangingUnit)
+        return Unit.get(GetChangingUnit())
 
     @staticmethod
     def get_manipulating():
-        return Handle.get(GetManipulatingUnit()) or Unit(GetManipulatingUnit)
+        return Unit.get(GetManipulatingUnit())
 
     @staticmethod
     def get_ordered():
-        return Handle.get(GetOrderedUnit()) or Unit(GetOrderedUnit)
+        return Unit.get(GetOrderedUnit())
 
     @staticmethod
     def get_order_target():
-        return Handle.get(GetOrderTargetUnit()) or Unit(GetOrderTargetUnit)
+        return Unit.get(GetOrderTargetUnit())
 
     @staticmethod
     def get_spell_ability():
-        return Handle.get(GetSpellAbilityUnit()) or Unit(GetSpellAbilityUnit)
+        return Unit.get(GetSpellAbilityUnit())
 
     @staticmethod
     def get_spell_target():
-        return Handle.get(GetSpellTargetUnit()) or Unit(GetSpellTargetUnit)
+        return Unit.get(GetSpellTargetUnit())
 
     @staticmethod
     def get_trigger():
-        return Handle.get(GetTriggerUnit()) or Unit(GetTriggerUnit)
+        return Unit.get(GetTriggerUnit())
 
     @staticmethod
     def get_event_state():
-        return Handle.get(GetEventUnitState()) or Unit(GetEventUnitState)
+        return Unit.get(GetEventUnitState())
 
     @staticmethod
     def get_event_target():
-        return Handle.get(GetEventTargetUnit()) or Unit(GetEventTargetUnit)
+        return Unit.get(GetEventTargetUnit())
 
     @staticmethod
     def get_mouse_focus():
-        return Handle.get(BlzGetMouseFocusUnit()) or Unit(BlzGetMouseFocusUnit)
+        return Unit.get(BlzGetMouseFocusUnit())
 
     # Automatically generated set unit functions
     @property

@@ -19,7 +19,7 @@ from ..df.commonj import *
 class Timer(Handle):
     def __init__(self,periodic=False):
         self.periodic = periodic
-        Handle.__init__(self,CreateTimer)
+        Handle.__init__(self,CreateTimer())
 
     def __gc__(self):
         # currently this never runs
@@ -48,7 +48,7 @@ class Timer(Handle):
         return self
 
     def destroy(self):
-        self.lose()
+        Handle.destroy(self)
         DestroyTimer(self._handle)
 
     def get_elapsed(self):

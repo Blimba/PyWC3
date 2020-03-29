@@ -61,9 +61,9 @@ class Region(Handle):
     _event_leave = None
     def __init__(self, hysteresis=0.0):
         # call handle init twice, so that both regions point to the same instance
-        Handle.__init__(self, CreateRegion)
+        Handle.__init__(self, CreateRegion())
         self.outer = self._handle
-        Handle.__init__(self,CreateRegion)
+        Handle.__init__(self, CreateRegion())
         self.inner = self._handle
         self.units = []
         self.inner_rects = []

@@ -14,6 +14,27 @@ class PlayerEvent(ClassEvent):
             else:
                 self.register(TriggerRegisterPlayerEvent, Player(playerid), playerevent)
 
+
+# class _Player:
+#     _lst = []
+#     _init = False
+#     def __new__(cls, i):
+#         if _Player._init:
+#             return _Player._lst[i]
+#         o = object.__new__()
+#         o.id = i
+#         return o
+#
+#     def color(self):
+#         return Player.color[self.id]
+#
+#     @property
+#     def controller(self):
+#         GetPlayerController(Player(self.id))
+#
+#     def is_local(self):
+#         return GetLocalPlayer() == Player(self.id)
+
 BlzPlayer = Player
 class Player:
     color = [
@@ -39,8 +60,13 @@ class Player:
 
     @staticmethod
     def _init():
+        # for i in range(bj_MAX_PLAYERS):
+        #     _Player._lst = _Player(i)
         PlayerEvent(EVENT_PLAYER_LEAVE, "on_leave", GetTriggerPlayer)
-        PlayerEvent(EVENT_PLAYER_END_CINEMATIC, "on_escape", GetTriggerPlayer)
+        PlayerEvent(EVENT_PLAYER_END_CINEMATIC, "on_escape")
 
+    # def __getitem__(self, i):
+    #     if isinstance(i,int):
+    #         return _Player(i)
 
 AddScriptHook(Player._init, MAIN_BEFORE)

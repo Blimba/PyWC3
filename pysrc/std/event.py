@@ -77,7 +77,7 @@ class Event(Handle):
             print(Error)
 
     def __init__(self,callback,*args):
-        Handle.__init__(self,CreateTrigger)
+        Handle.__init__(self,CreateTrigger())
         TriggerAddAction(self._handle, Event._triggered)
         self.callback = callback
         self.args = args
@@ -103,7 +103,7 @@ class ClassEvent(Handle):
 
 
     def __init__(self,methodname,getter,*args):
-        Handle.__init__(self,CreateTrigger)
+        Handle.__init__(self,CreateTrigger())
         TriggerAddAction(self._handle, ClassEvent._triggered)
         self.args = args
         self.getter = getter

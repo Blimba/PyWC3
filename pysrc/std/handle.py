@@ -7,18 +7,11 @@
 """
 class Handle:
     handles = {}
-
-    def __init__(self, constructorfunc, *args):
+    def __init__(self, handle):
         # constructorfunc can be a function that returns a handle, or a handle directly
-        if callable(constructorfunc):
-            self._handle = constructorfunc(*args)
-        else:
-            self._handle = constructorfunc
-            if self.get(constructorfunc) != None:
-                print("Warning: secondary object created for handle ", constructorfunc)
-        self.track()
-
-    def track(self):
+        self._handle = handle
+        if Handle.get(handle) != None:
+            print("Warning: secondary object created for handle ", handle)
         Handle.handles[self._handle] = self
 
     @staticmethod
@@ -27,8 +20,9 @@ class Handle:
             return Handle.handles[handle]
         return None
 
-    def lose(self):
+    def destroy(self):
         del Handle.handles[self._handle]
+        self._handle = None
 
     @property
     def handle(self):

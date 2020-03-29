@@ -37,7 +37,7 @@ class SpellEvent:
     def __new__(cls,ability_id):
         if ability_id in SpellEvent._events:
             return SpellEvent._events[ability_id]
-        o = object.__new__()
+        o = object.__new__(cls)
         SpellEvent._events[ability_id] = o
         return o
 

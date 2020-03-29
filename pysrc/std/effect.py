@@ -13,13 +13,13 @@ import math
 
 class Effect(Handle):
     def __init__(self, x, y, z, path):
-        Handle.__init__(self, AddSpecialEffect, path, x, y)
+        Handle.__init__(self, AddSpecialEffect(path, x, y))
         BlzSetSpecialEffectZ(self._handle, z)
         self.r, self.g, self.b, self.a = 255, 255, 255, 255
         self._x, self._y, self._z = x, y, z
 
     def destroy(self):
-        self.lose()
+        Handle.destroy(self)
         DestroyEffect(self._handle)
 
     # Positioning
