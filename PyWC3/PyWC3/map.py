@@ -64,6 +64,16 @@ class Map:
     def edit(self):
         f = os.path.join(os.getcwd(),"{}\\{}".format(self.cfg['MAP_FOLDER'], self.file))
         if os.path.exists(f):
+            bf = '{}.pywc3.backup'.format(f)
+            print("Backing up map to {}".format(bf))
+            if os.path.isdir(f):
+                if os.path.exists(bf):
+                    shutil.rmtree(bf)
+                shutil.copytree(f,bf)
+            else:
+                try: os.remove(bf)
+                except: pass
+                shutil.copy(f,bf)
             print("Editing map {}".format(f))
             process = subprocess.Popen([self.cfg['WE_EXE'], '-launch', '-loadfile', '{}'.format(f)],
                                        stdout=subprocess.PIPE,
