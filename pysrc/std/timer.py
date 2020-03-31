@@ -21,10 +21,10 @@ class Timer(Handle):
         self.periodic = periodic
         Handle.__init__(self,CreateTimer())
 
-    def __gc__(self):
-        # currently this never runs
-        print('timer gc',self._handle,self.get_elapsed())
-        self.destroy()
+    # def __gc__(self):
+    #     # currently this never runs
+    #     print('timer gc',self._handle,self.get_elapsed())
+    #     self.destroy()
 
     def start(self,time,callback):
         self.time = time
