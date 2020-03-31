@@ -8,6 +8,7 @@
 
     "MAP_FOLDER": "maps",
     "DIST_FOLDER": "dist",
+    "TEMP_FOLDER": "temp",
     "JASS_FOLDER": "jass",
 
     "PYTHON_SOURCE_FOLDER": "pysrc",

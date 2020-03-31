@@ -42,13 +42,14 @@ The config.json file contains file references used by the project. It has the ge
 {
     "WAR3_EXE": "E:\\Games\\Warcraft III\\x86_64\\Warcraft III.exe",
     "WE_EXE": "E:\\Games\\Warcraft III\\x86_64\\World Editor.exe",
-    "WINDOWMODE": "window",
+    "WINDOWMODE": "windowed",
 
     "MPQ_EXE": "mpqeditor\\mpqeditor.exe",
     "SAVE_AS_MPQ": false,
 
     "MAP_FOLDER": "maps",
     "DIST_FOLDER": "dist",
+    "TEMP_FOLDER": "temp",
     "JASS_FOLDER": "jass",
 
     "PYTHON_SOURCE_FOLDER": "pysrc",
@@ -60,9 +61,10 @@ The config.json file contains file references used by the project. It has the ge
 ``` 
 where `WAR3_EXE` and `WE_EXE` point to the warcraft executables. `WINDOWMODE` can be fullscreen or windowed to use as
 launch mode for Warcraft III. `MAP_FOLDER` is the folder where the original map can be found, which should be saved as 
-a folder format. `DIST_FOLDER` is where the built map files can be found after PyWC3 has been executed. `JASS_FOLDER` 
-contains the Blizzard Jass code definitions, which help us with code completion. Every new version of Warcraft III 
-requires us to [translate these](#jass-translate) to make sure our definitions are up to date.
+a folder format. `DIST_FOLDER` is where the built map files can be found after PyWC3 has been executed. `TEMP_FOLDER` is
+ a directory that should not exist, where PyWC3 temporarily places map files during build. `JASS_FOLDER` contains the 
+ Blizzard Jass code definitions, which help us with code completion. Every new version of Warcraft III requires us to
+  [translate these](#jass-translate) to make sure our definitions are up to date.
 
 `MPQ_EXE` points to the location of the [MPQEDitor.exe](http://www.zezula.net/en/mpq/download.html) which we can use
 to load/save the map in mpq format. Loading folder/mpq is automatic based on the type we supply, and the way the map is

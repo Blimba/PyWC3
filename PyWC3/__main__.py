@@ -28,6 +28,8 @@ def create_arg_parser():
                         dest="fullscreen", action="store_true")
     parser.add_argument("--windowed", help="Add to make --run run the game in windowed.",
                         dest="windowed", action="store_true")
+    parser.add_argument("--freeze-preprocess", help="Run this command to add your preprocess files to the SOURCE map instead of the DIST. Warning: cannot be undone!",
+                        dest="freeze_preproc", action="store_true")
     return parser
 
 def main():
@@ -47,8 +49,10 @@ def main():
 
         m.generate_definitions_file()
 
-        if(not (argv.build or argv.run or argv.edit or argv.initpy)):
-            print("Incorrect usage: please pass --build, --run or --edit as follows: python PyWC3 map.w3x --build --run")
+        if(not (argv.build or argv.run or argv.edit or argv.initpy or argv.freeze_preproc)):
+            print("Incorrect usage: please pass --build, --run, --edit, --init-python or --freeze-preprocess as follows: python PyWC3 map.w3x --build --run")
+        if argv.freeze_preproc:
+            m.freeze_preprocess()
         if argv.initpy:
             m.generate_python_source()
         if argv.build:

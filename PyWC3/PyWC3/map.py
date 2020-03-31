@@ -120,14 +120,34 @@ class Map:
                         value = value['value']
                     self.objfiles[file].add_mod(new_id,id,value,level,pointer,from_id=old_id)
 
-    def translate_file(self, file):
+    def translate_file(self, file, freeze_preproc = False):
         '''
         Translate a python script to lua. Also check for preprocessor calls such as """ObjEditor..."""
         '''
         with open(file, "r") as f:
             content = "".join(f.readlines())
+        rc = content
         content = re.sub("^import (.+)$", "", content, flags=re.MULTILINE)
         content = re.sub("^from (.+) import (.+)*", "", content, flags=re.MULTILINE)
+
+        # preprocess
+        if re.match("^\s*#\s*RunPy=([\S]+?)\s*$",content,flags=re.MULTILINE):
+            for fn in re.findall("^\s*#\s*RunPy=([\S]+?)\s*$", content, flags=re.MULTILINE):
+                if fn.split('.')[-1] == "py":
+                    fn = fn.split('.')[0].replace("\\",".")
+                    if freeze_preproc:
+                        print('> Freezing preprocess {}.py'.format(fn))
+                    else:
+                        print('> Preprocessing {}.py'.format(fn))
+                    try: imp = importlib.import_module(fn)
+                    except ModuleNotFoundError: raise SystemError('Module {} not found!'.format(fn))
+                    imp.main(self)
+            if freeze_preproc:
+                rc = re.sub(r"^\s*#\s*RunPy=([\S]+?)\s*$",r"# frozen[RunPy=\1]",rc, flags=re.MULTILINE)
+                with open(file,"w") as f:
+                    f.write(rc)
+        if freeze_preproc: return ""
+        # object editing
         for fn in re.findall("^\s*#ObjEditor=([\S]+?)\s*$", content, flags=re.MULTILINE):
             if fn.split('.')[-1] == "json":
                 fn = os.path.join(self.cfg['PYTHON_SOURCE_FOLDER'],fn)
@@ -137,12 +157,6 @@ class Map:
                         self.objeditor(c)
                 except FileNotFoundError:
                     raise SystemError("ObjEditor json file {} not found in {}!".format(fn,os.getcwd()))
-        for fn in re.findall("^\s*#\s*RunPy=([\S]+?)\s*$", content, flags=re.MULTILINE):
-            if fn.split('.')[-1] == "py":
-                fn = fn.split('.')[0].replace("\\",".")
-                try: imp = importlib.import_module(fn)
-                except ModuleNotFoundError: raise SystemError('Module {} not found!'.format(fn))
-                imp.main(self)
         for c in re.findall("\'{3}ObjEditor([\s\S]+?)\'{3}", content, flags=re.MULTILINE):
             self.objeditor(c)
         for c in re.findall("\"{3}ObjEditor([\s\S]+?)\"{3}", content, flags=re.MULTILINE):
@@ -182,7 +196,8 @@ class Map:
             iterator('',i,[])
         return nfilelst
 
-    def get_dependencies(self, file, exclude=True):
+
+    def get_dependencies(self, file, current_list=[], exclude=True):
         '''
         find the imports in files and add them to a tree structure
         '''
@@ -198,7 +213,9 @@ class Map:
                     lst.append([file])
                 else:
                     lst.append([])
-
+                flatten = lambda x: [y for l in x for y in flatten(l)] if type(x) is list else [x]
+                if file in flatten(current_list):
+                    return lst
                 rematcher = [
                     re.findall("^import (.+)", content, re.MULTILINE),
                     re.findall("^from (.+) import", content, re.MULTILINE),
@@ -208,9 +225,19 @@ class Map:
                         newfile = re.sub('(?<!\.)\.(?!\.)', '\\\\', match).strip('\\')
                         newfile = re.sub('\.\.', '..\\\\', newfile)
                         path = os.path.normpath(os.path.join(srcdir, newfile))
-                        for d in self.get_dependencies("{}.py".format(path), exclude=False):
-                            # if d not in lst:
-                            lst[-1].append(d)
+                        if os.path.isdir(path):
+                            for root,dir,files in os.walk(path):
+                                for f in files:
+                                    if f.split('.')[-1] == 'py' and f != '__init__.py':
+                                        # print(os.path.join(path,f))
+                                        for d in self.get_dependencies(os.path.join(root,f), lst, exclude=False):
+                                            lst[-1].append(d)
+                        else:
+                            path = "{}.py".format(path)
+                            if os.path.isfile(path):
+                                for d in self.get_dependencies(path, lst, exclude=False):
+                                    # if d not in lst:
+                                    lst[-1].append(d)
 
         except FileNotFoundError:
             if 'math' not in file:
@@ -248,84 +275,100 @@ class Map:
             print("> Appended translated file {}.".format(os.path.join(self.cfg['PYTHON_SOURCE_FOLDER'], "{}.py".format(filename))))
 
 
-    def build(self):
-        # delete previous dist
-        try: shutil.rmtree(os.path.join(self.cfg['DIST_FOLDER'], self.file))
-        except: pass  # the dist map does not exist yet, no problem!
-        try: os.remove(os.path.join(self.cfg['DIST_FOLDER'], self.file))
-        except FileNotFoundError: pass  # no problem, carry on
-
+    def unpack_to(self,dst):
+        self.tmp_path = dst
+        self.src_path = '{}/src'.format(self.tmp_path)
+        self.dist_path = '{}/dist'.format(self.tmp_path)
         print("> Generating distribution map files...")
         # generate temp folder and paste all files there. If the map is an MPQ, extract all files.
         fn = os.path.join(self.cfg['MAP_FOLDER'], self.file)
-        if os.path.exists('temp'):
-            shutil.rmtree('temp')
+        if os.path.exists(self.tmp_path):
+            shutil.rmtree(self.tmp_path)
         if self._is_mpq:
-            if not os.path.exists('temp'):
-                os.mkdir('temp')
-                if not os.path.exists('temp/src'):
-                    os.mkdir('temp/src')
-                if not os.path.exists('temp/dist'):
-                    os.mkdir('temp/dist')
+            if not os.path.exists(self.tmp_path):
+                os.mkdir(self.tmp_path)
+                if not os.path.exists(self.src_path):
+                    os.mkdir(self.src_path)
+                if not os.path.exists(self.dist_path):
+                    os.mkdir(self.dist_path)
             if not os.path.isfile(fn) and os.path.isfile(self.cfg['MPQ_EXE']):
                 raise SystemError("Map file is an mpq archive and MPQEditor.exe does not exist.")
-            self._print_sp(subprocess.Popen([self.cfg['MPQ_EXE'], 'e', fn, '*', 'temp/src', '/fp'],
+            self._print_sp(subprocess.Popen([self.cfg['MPQ_EXE'], 'e', fn, '*', self.src_path, '/fp'],
                                             stdout=subprocess.PIPE,
                                             stderr=subprocess.PIPE))
         else:
-            shutil.copytree(fn,'temp/src')
-            os.mkdir('temp/dist')
-        if not os.path.exists('temp/src/war3map.lua'):
+            shutil.copytree(fn,self.src_path)
+            os.mkdir(self.dist_path)
+        if not os.path.exists('{}/war3map.lua'.format(self.src_path)):
             raise SystemError("Map does not include lua script. Please edit the map and choose lua as scripting language.")
 
-        self.src_path = 'temp/src'
-        self.dist_path = 'temp/dist'
-
-        # Build the map from the temporary src to dist folder.
-        self.build_script(
-            'temp/src/war3map.lua',
-            'temp/dist/war3map.lua',
-        )
-        # Build the ObjFiles, if they have been found in build_script.
-        for objfile in self.objfiles:
-            objf = self.objfiles[objfile]
-            print("> Building ObjFile {}...".format(objf.filename))
-            objf.write('temp/dist')
+    def dist_to(self,dst):
+        # delete previous dist
+        dst = os.path.join(dst, self.file)
+        try: shutil.rmtree(dst)
+        except: pass  # the dist map does not exist yet, no problem!
+        try: os.remove(dst)
+        except FileNotFoundError: pass  # no problem, carry on
 
         # Copy the temporary directories to the dist folder and include the built files. Save as MPQ if desired.
         if self._save_mpq:
             if not os.path.isfile(self.cfg['MPQ_EXE']):
                 raise SystemError("Map file is an mpq archive and MPQEditor.exe does not exist.")
             # create mpq archive from folder
-            nfn = os.path.join(self.cfg['DIST_FOLDER'], self.file)
-            self._print_sp(subprocess.Popen([self.cfg['MPQ_EXE'], 'n', nfn],
+            self._print_sp(subprocess.Popen([self.cfg['MPQ_EXE'], 'n', dst],
                                     stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE))
 
-            for root,dir,files in os.walk('temp/src'):
+            for root,dir,files in os.walk(self.src_path):
                 for file in files:
-                    nroot = root.replace('temp/src', '').lstrip('\\')
-                    self._print_sp(subprocess.Popen([self.cfg['MPQ_EXE'], 'a', nfn, os.path.join(root,file), os.path.join(nroot,file)],
+                    nroot = root.replace(self.src_path, '').lstrip('\\')
+                    self._print_sp(subprocess.Popen([self.cfg['MPQ_EXE'], 'a', dst, os.path.join(root,file), os.path.join(nroot,file)],
                                                     stdout=subprocess.PIPE,
                                                     stderr=subprocess.PIPE))
-            for root,dir,files in os.walk('temp/dist'):
+            for root,dir,files in os.walk(self.dist_path):
                 for file in files:
-                    nroot = root.replace('temp/dist', '').lstrip('\\')
-                    self._print_sp(subprocess.Popen([self.cfg['MPQ_EXE'], 'a', nfn, os.path.join(root,file), os.path.join(nroot,file)],
+                    nroot = root.replace(self.dist_path, '').lstrip('\\')
+                    self._print_sp(subprocess.Popen([self.cfg['MPQ_EXE'], 'a', dst, os.path.join(root,file), os.path.join(nroot,file)],
                                                     stdout=subprocess.PIPE,
                                                     stderr=subprocess.PIPE))
         else:
             # copy the map
-            shutil.copytree('temp/src', os.path.join(self.cfg['DIST_FOLDER'], self.file))
-            for root, dir, files in os.walk('temp/dist'):
+            shutil.copytree(self.src_path, dst)
+            for root, dir, files in os.walk(self.dist_path):
                 for file in files:
-                    nroot = root.replace('temp/dist', '').lstrip('\\')
-                    shutil.copy(os.path.join(root,file),os.path.join(self.cfg['DIST_FOLDER'], self.file, nroot, file))
+                    nroot = root.replace(self.dist_path, '').lstrip('\\')
+                    shutil.copy(os.path.join(root,file),os.path.join(dst, nroot, file))
         # remove the temp directory
-        try: shutil.rmtree('temp')
+        try: shutil.rmtree(self.tmp_path)
         except: pass  # no problem
+
+    def build(self):
+        self.unpack_to(self.cfg['TEMP_FOLDER'])
+        # Build the map from the temporary src to dist folder.
+        self.build_script(
+            '{}/war3map.lua'.format(self.src_path),
+            '{}/war3map.lua'.format(self.dist_path),
+        )
+        # Build the ObjFiles, if they have been found in build_script.
+        for objfile in self.objfiles:
+            objf = self.objfiles[objfile]
+            print("> Building ObjFile {}...".format(objf.filename))
+            objf.write(self.dist_path)
+
+        self.dist_to(self.cfg['DIST_FOLDER'])
         print("Build completed.")
 
+    def freeze_preprocess(self):
+        # remove extension if required
+        self.unpack_to(self.cfg['TEMP_FOLDER'])
+        filename = self.file
+        spl = filename.split(".")
+        if spl[-1] == 'w3m' or spl[-1] == 'w3x':
+            filename = ".".join(spl[:-1])
+        self.translate_file(os.path.join(self.cfg['PYTHON_SOURCE_FOLDER'], "{}.py".format(filename)), freeze_preproc=True)
+        for file in self.import_tree_to_list(self.get_dependencies(os.path.join(self.cfg['PYTHON_SOURCE_FOLDER'], "{}.py".format(filename)))):
+            self.translate_file(file, freeze_preproc=True)
+        self.dist_to(self.cfg['MAP_FOLDER'])
 
     def generate_python_source(self):
         filename = self.file
@@ -352,35 +395,34 @@ AddScriptHook({}, MAIN_AFTER)
         gbls = {}
         filename = self.file
         spl = filename.split(".")
-
         if spl[-1] == 'w3m' or spl[-1] == 'w3x':
             filename = ".".join(spl[:-1])
-
+        temp = self.cfg['TEMP_FOLDER']
         fn = os.path.join(self.cfg['MAP_FOLDER'], self.file)
-        if os.path.exists('temp'):
-            shutil.rmtree('temp')
+        if os.path.exists(temp):
+            shutil.rmtree(temp)
         if self._is_mpq:
-            if not os.path.exists('temp'):
-                os.mkdir('temp')
-                if not os.path.exists('temp/src'):
-                    os.mkdir('temp/src')
-                if not os.path.exists('temp/dist'):
-                    os.mkdir('temp/dist')
+            if not os.path.exists(temp):
+                os.mkdir(temp)
+                if not os.path.exists('{}/src'.format(temp)):
+                    os.mkdir('{}/src'.format(temp))
+                if not os.path.exists('{}/dist'.format(temp)):
+                    os.mkdir('{}/dist'.format(temp))
             if not os.path.isfile(fn) and os.path.isfile(self.cfg['MPQ_EXE']):
                 raise SystemError("Map file is an mpq archive and MPQEditor.exe does not exist.")
-            self._print_sp(subprocess.Popen([self.cfg['MPQ_EXE'], 'e', fn, 'war3map.lua', 'temp/src'],
+            self._print_sp(subprocess.Popen([self.cfg['MPQ_EXE'], 'e', fn, 'war3map.lua', '{}/src'.format(temp)],
                                             stdout=subprocess.PIPE,
                                             stderr=subprocess.PIPE))
-            self._print_sp(subprocess.Popen([self.cfg['MPQ_EXE'], 'e', fn, 'war3map.doo', 'temp/src'],
+            self._print_sp(subprocess.Popen([self.cfg['MPQ_EXE'], 'e', fn, 'war3map.doo', '{}/src'.format(temp)],
                                             stdout=subprocess.PIPE,
                                             stderr=subprocess.PIPE))
         else:
-            if not os.path.exists('temp'):
-                os.mkdir('temp')
-                if not os.path.exists('temp/src'):
-                    os.mkdir('temp/src')
-                if not os.path.exists('temp/dist'):
-                    os.mkdir('temp/dist')
+            if not os.path.exists(temp):
+                os.mkdir(temp)
+                if not os.path.exists('{}/src'.format(temp)):
+                    os.mkdir('{}/src'.format(temp))
+                if not os.path.exists('{}/dist'.format(temp)):
+                    os.mkdir('{}/dist'.format(temp))
             try:
                 shutil.copy(os.path.join(fn, 'war3map.lua'),'temp/src/war3map.lua')
                 shutil.copy(os.path.join(fn, 'war3map.doo'), 'temp/src/war3map.doo')
@@ -394,7 +436,7 @@ AddScriptHook({}, MAIN_AFTER)
                     gbls[match[0]] = match[1]
         except:
             print("Could not generate definitions, map does not have war3map.lua")
-            shutil.rmtree('temp')
+            shutil.rmtree(temp)
             return
         outf = "{}.py".format(os.path.join(self.cfg['PYTHON_SOURCE_FOLDER'], self.cfg['DEF_SUBFOLDER'], filename))
         with open(outf, "w") as f:
@@ -406,7 +448,7 @@ AddScriptHook({}, MAIN_AFTER)
                 f.write("{} = {}\n".format(var, gbls[var]))
             if self.cfg['READ_DOO']:
                 df = DooFile()
-                df.read('temp/src')
+                df.read('{}/src'.format(temp))
                 if len(df.data['doo']) > 0:
                     f.write("\n# Below are the preplaced doodads\n\n")
                 for doo in df.data['doo']:
@@ -420,4 +462,4 @@ AddScriptHook({}, MAIN_AFTER)
                     f.write('# {id} at position ({x}, {y}, {z})\n'.format(**doo))
         print("Definitions created in {}".format(outf))
 
-        shutil.rmtree('temp')
+        shutil.rmtree(temp)
