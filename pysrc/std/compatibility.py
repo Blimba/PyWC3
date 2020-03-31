@@ -31,7 +31,7 @@ class math:
 
 class coroutine:
     @staticmethod
-    def resume(co):
+    def resume(co,*args):
         pass
 
     @staticmethod
