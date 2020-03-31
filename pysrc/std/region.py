@@ -105,6 +105,12 @@ class Region(Handle):
             self.on_exit(unit)
             self.units.remove(unit)
 
+    def enter_existing(self):
+        for r in self.inner_rects:
+            lst = Unit.list_in_rect(r)
+            for u in lst:
+                self._on_enter_check(u)
+
     @staticmethod
     def get_triggering():
         return Handle.get(GetTriggeringRegion())  # can't make a new region from 1, so just return none if we dont have it
