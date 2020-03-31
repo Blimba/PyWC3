@@ -1,7 +1,7 @@
 from .math3d import *
 from ..std.effect import *
 from ..std.index import *
-from .cyclist import *
+from .periodic import *
 from ..std.timer import *
 from ..std.unit import *
 class Force(Vector3):
@@ -23,9 +23,14 @@ def G_func(self,particle):
     return a
 G.calculate = G_func
 
+class Spring(Force):
+    def __init__(self, x, y, z, temp=False):
+        Force.__init__(self,0,0,0)
+        self.center = Vector3(x, y, z)
+    def calculate(self,particle):
+        return (self.center-particle.position)*particle.mass
 
-class Particle(Cyclist):
-    _start = None
+class Particle(Periodic):
     _group = None
     collidables = []
     period = 0.01
@@ -34,12 +39,7 @@ class Particle(Cyclist):
         print('freeing',self)
 
     def __init__(self,obj,velocity=None,mass=1,follow_direction=False,collision_sampling=1,size=10):
-        Cyclist.__init__(self)
-
-        if Particle._start == None:
-            Particle._start = self
-        else:
-            Particle._start.next = self
+        Periodic.__init__(self)
         self.velocity = velocity or Vector3(0, 0, 100)
         self.follow_direction = follow_direction
         if isinstance(obj,Vector3):
@@ -49,7 +49,6 @@ class Particle(Cyclist):
             self.obj = obj
             self.position = Vector3(obj.x, obj.y, obj.z)
             self.update_graphics()
-
         self.time = 0.0
         self.forces = []
         self.mass = mass
@@ -64,7 +63,16 @@ class Particle(Cyclist):
         self.on_timeout = None
         self.height = 0
 
-    def collided(self,pos=None):
+    def destroy(self):
+        self.dead = True
+        Periodic.destroy(self)
+        self.position = None
+        self.velocity = None
+        if self.obj != None and self.obj != self:
+            self.obj.destroy()
+            self.obj = None
+
+    def _collided(self, pos=None):
         if pos == None: pos = self.position
         if Vector3.from_terrain(pos.x, pos.y, True).z > pos.z:
             return True
@@ -116,12 +124,13 @@ class Particle(Cyclist):
             self.position.add(v)
             # if the object doesn't have a terrainhit function, don't do the collision checking.
             if callable(self.on_terrainhit):
-                # get the normal from the function
-                if self.collided():
+                # check if the unit is 'in' the terrain or in a collisionobject
+                if self._collided():
                     # should probably implement the following better...
                     if self.collision_object != None and hasattr(self.collision_object,"velocity"):
                         self.position.add(self.collision_object.velocity * r)
                     self.position.subtract(v)
+                    # get the normal from the function
                     n = self.collision_normal()
                     self.on_terrainhit(n)
                     if self.dead == False:
@@ -176,40 +185,12 @@ class Particle(Cyclist):
             else:
                 self.obj.x, self.obj.y, self.obj.z = self.position.x, self.position.y, self.position.z
 
-    def destroy(self):
-        self.dead = True
-        if (Particle._start == self):
-            Particle._start = self._n
-        self.exclude()
-        self.position = None
-        self.velocity = None
-        self._n = None
-        self._p = None
-        if (Particle._start == self):
-            Particle._start = None
-        if self.obj != None and self.obj != self:
-            self.obj.destroy()
-            self.obj = None
+    def on_period(self):
+        self.update()
+        self.update_graphics()
 
     @staticmethod
-    def _period():
-        node = Particle._start
-        while node != None:
-            nnode = node.next
-            # try/except blocks leak memory due to anonymous functions, change at some point
-            try: node.update()
-            except: print(Error)
-            try: node.update_graphics()
-            except: print(Error)
-            node = nnode
-            if node == Particle._start or Particle._start == None: break
-        Timer.get_expired().restart()
-
-    @staticmethod
-    def _Start():
+    def _init():
         Particle._group = CreateGroup()
-        Particle.timer = Timer()
-        Particle.timer.start(Particle.period, Particle._period)
 
-
-AddScriptHook(Particle._Start,MAIN_BEFORE)
+AddScriptHook(Particle._init,MAIN_BEFORE)
