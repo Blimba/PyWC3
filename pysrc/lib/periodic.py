@@ -7,7 +7,10 @@ class Periodic(Cyclist):
 
     def __init__(self):
         Cyclist.__init__(self)
-        self.start_periodic()
+        if Periodic._first == None:
+            Periodic._first = self
+        else:
+            Periodic._first.next = self
         self.on_period = None
 
     def start_periodic(self):
@@ -16,13 +19,10 @@ class Periodic(Cyclist):
         else:
             Periodic._first.next = self
 
-    def stop_periodic(self):
-        self.exclude()
-
     def destroy(self):
         if self == Periodic._first:
             Periodic._first = self.next
-        self.exclude()
+        Cyclist.exclude(self)
         if self == Periodic._first:
             Periodic._first = None
 
