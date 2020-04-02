@@ -5,14 +5,14 @@ class Grid2:
     class Node:
         reuse = []
         _fifo_buffer_size = 100  # this is the amount of temporary nodes used
-        def __new__(cls,parent_grid,x,y,X,Y):
+        def __new__(cls,parent_grid,x,y,X,Y,items=None):
             if len(Grid2.Node.reuse) > Grid2.Node._fifo_buffer_size:
                 o = Grid2.Node.reuse.pop(0)
                 return o
             else:
                 o = object.__new__(cls)
                 return o
-        def __init__(self,parent_grid,x,y,X,Y):
+        def __init__(self,parent_grid,x,y,X,Y,items=None):
             self.grid = parent_grid
             self.x = x
             self.y = y
@@ -41,18 +41,31 @@ class Grid2:
         self.sX = size_x
         self.sY = size_y
         self._offset = Vector2(0.0,0.0)
+        self._initialized = False
 
-    def init_nodes(self,offset,node_class=None):
+    def init_nodes(self,offset,node_class=None,items=None):
         node_class = node_class or Grid2.Node
+        if self._initialized == True:
+            self.destroy_nodes()
         self.data = []
         self.offset = offset
         for X in range(self.sX):
             self.data.append([])
             for Y in range(self.sY):
-                self.data[X].append(node_class(self,X*self.grid_interval+self._offset.x,Y*self.grid_interval+self._offset.y,X,Y))
+                if items == None:
+                    self.data[X].append(node_class(self,X*self.grid_interval+self._offset.x,Y*self.grid_interval+self._offset.y,X,Y))
+                else:
+                    self.data[X].append(node_class(self, X * self.grid_interval + self._offset.x, Y * self.grid_interval + self._offset.y, X, Y, items))
+        self._initialized = True
+
+    def destroy_nodes(self):
+        if self._initialized:
+            for X in range(self.sX):
+                for Y in range(self.sY):
+                    self.data[X][Y].destroy()
 
     def destroy(self,keep_nodes = False):
-        if not keep_nodes and callable(self.data[0][0].destroy):
+        if self._initialized and not keep_nodes and callable(self.data[0][0].destroy):
             for X in range(self.sX):
                 for Y in range(self.sY):
                     self.data[X][Y].destroy()
