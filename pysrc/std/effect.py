@@ -68,6 +68,10 @@ class Effect(Handle):
     def reset_matrix_scale(self):
         BlzResetSpecialEffectMatrix(self._handle)
 
+    def set_orientation(self, yaw, pitch, roll):
+        BlzSetSpecialEffectOrientation(self._handle, yaw, -pitch, roll)
+        return self
+
     def look_along(self, x, y, z, roll=0):
         xy = math.sqrt(x * x + y * y)
         yaw = math.atan(y, x)
@@ -92,6 +96,7 @@ class Effect(Handle):
         if (a >= 0):
             self.a = a
             BlzSetSpecialEffectAlpha(self._handle, a)
+        return self
 
     def animate(self, anim, timescale=1.0):
         if timescale == 1.0:

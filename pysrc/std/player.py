@@ -14,6 +14,11 @@ class PlayerEvent(ClassEvent):
             else:
                 self.register(TriggerRegisterPlayerEvent, Player(playerid), playerevent)
 
+class PlayerChatEvent(ClassEvent):
+    def __init__(self, methodname, *args):
+        ClassEvent.__init__(self, methodname, Player, *args)
+        for playerid in range(bj_MAX_PLAYERS):
+            self.register(TriggerRegisterPlayerChatEvent, Player(playerid), "", False)
 
 # class _Player:
 #     _lst = []
@@ -64,6 +69,7 @@ class Player:
         #     _Player._lst = _Player(i)
         PlayerEvent(EVENT_PLAYER_LEAVE, "on_leave", GetTriggerPlayer)
         PlayerEvent(EVENT_PLAYER_END_CINEMATIC, "on_escape")
+        PlayerChatEvent("on_chat", GetTriggerPlayer, GetEventPlayerChatString)
 
     # def __getitem__(self, i):
     #     if isinstance(i,int):

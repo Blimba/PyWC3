@@ -284,6 +284,9 @@ class Unit(Handle):
     def use_food(self,usefood):
         SetUnitUseFood(self._handle,usefood)
 
+    def has_ability(self,abilid):
+        return GetUnitAbilityLevel(self._handle,abilid) > 0
+
     def is_visible_for_player(self,playerid):
         return IsUnitVisible(self._handle,Player(playerid))
 
@@ -347,8 +350,11 @@ class Unit(Handle):
         PlayerUnitEvent(EVENT_PLAYER_UNIT_DAMAGING, "on_damaging", Unit.get_damage_source, Unit.get_trigger)
         PlayerUnitEvent([EVENT_PLAYER_UNIT_ISSUED_ORDER, EVENT_PLAYER_UNIT_ISSUED_POINT_ORDER], "on_ordered", Unit.get_ordered)
         PlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_TARGET_ORDER, "on_ordered", Unit.get_ordered, Unit.get_order_target)
+        PlayerUnitEvent(EVENT_PLAYER_UNIT_PICKUP_ITEM, "on_item_pickup", Unit.get_manipulating) # also pass an item, once I make the class...
+        PlayerUnitEvent(EVENT_PLAYER_UNIT_DROP_ITEM, "on_item_drop", Unit.get_manipulating)  # also pass an item, once I make the class...
 
     # manual properties
+
 
     # BE CAREFUL: ASYNCHRONOUS
     @property
