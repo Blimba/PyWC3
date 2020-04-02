@@ -93,6 +93,8 @@ class PhysicsUnit(Unit,Particle):
         for offset in PhysicsUnit.offsets:
             np = self.position+offset
             tp = self.terrain_point(np)
+            if IsTerrainPathable(tp.x, tp.y, PATHING_TYPE_WALKABILITY):
+                tp.z += 100
             if tp.z > np.z:
                 self.on_walk_terrainhit(offset*(len(self.walking_velocity)/len(offset)),np - tp)
         Particle.update(self)

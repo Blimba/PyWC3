@@ -186,8 +186,9 @@ class Particle(Periodic):
                 self.obj.x, self.obj.y, self.obj.z = self.position.x, self.position.y, self.position.z
 
     def on_period(self):
-        self.update()
-        self.update_graphics()
+        if not self.dead:
+            self.update()
+            self.update_graphics()
 
     @staticmethod
     def _init():
