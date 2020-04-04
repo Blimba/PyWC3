@@ -14,13 +14,21 @@ import math
 class Effect(Handle):
     def __init__(self, x, y, z, path):
         Handle.__init__(self, AddSpecialEffect(path, x, y))
-        BlzSetSpecialEffectZ(self._handle, z)
+        if isinstance(z,int):
+            BlzSetSpecialEffectZ(self._handle, z)
         self.r, self.g, self.b, self.a = 255, 255, 255, 255
         self._x, self._y, self._z = x, y, z
 
     def destroy(self):
         Handle.destroy(self)
         DestroyEffect(self._handle)
+
+    @staticmethod
+    def flash(x,y,z,path):
+        fx = AddSpecialEffect(path,x,y)
+        if isinstance(z,int):
+            BlzSetSpecialEffectZ(fx,z)
+        DestroyEffect(fx)
 
     # Positioning
     @property
@@ -64,9 +72,11 @@ class Effect(Handle):
 
     def set_matrix_scale(self, x, y, z):
         BlzSetSpecialEffectMatrixScale(self._handle, x, y, z)
+        return self
 
     def reset_matrix_scale(self):
         BlzResetSpecialEffectMatrix(self._handle)
+        return self
 
     def set_orientation(self, yaw, pitch, roll):
         BlzSetSpecialEffectOrientation(self._handle, yaw, -pitch, roll)
@@ -77,9 +87,10 @@ class Effect(Handle):
         yaw = math.atan(y, x)
         pitch = math.atan(z, xy)
         BlzSetSpecialEffectOrientation(self._handle, yaw, -pitch, roll)
+        return self
 
     def look_at(self, x, y, z, roll=0):
-        self.look_along(x - self._x, y - self._y, z - self._z, roll)
+        return self.look_along(x - self._x, y - self._y, z - self._z, roll)
 
     @property
     def color(self):
@@ -103,6 +114,7 @@ class Effect(Handle):
             BlzPlaySpecialEffect(self._handle, anim)
         else:
             BlzPlaySpecialEffectWithTimeScale(self._handle, anim, timescale)
+        return self
 
     def add_sub_animation(self, anim):
         return BlzSpecialEffectAddSubAnimation(self._handle, anim)

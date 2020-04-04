@@ -3,15 +3,77 @@ from .cyclist import *
 from ..std.unit import *
 from .math2d import *
 from ..std.timer import *
-class Waypoint(Vector2,Cyclist):
+from .particle import *
+class Waypoint2(Vector2,Cyclist):
     range = 32
     def __init__(self,x,y,temp=False):
         Vector2.__init__(self,x,y)
         Cyclist.__init__(self)
     def reached(self,obj):
-        if abs(obj.x - self.x) < Waypoint.range and abs(obj.y - self.y) < Waypoint.range:
+        if abs(obj.x - self.x) < Waypoint2.range and abs(obj.y - self.y) < Waypoint2.range:
             return True
         return False
+class Waypoint3(Vector3,Cyclist):
+    range = 32
+    def __init__(self,x,y,z,temp=False):
+        Vector3.__init__(self,x,y,z)
+        Cyclist.__init__(self)
+    def reached(self,obj):
+        if len(obj.position-self) <= Waypoint3.range:
+            return True
+        return False
+
+class WaypointParticle(Particle):
+    def __init__(self,obj,velocity):
+        self.speed = velocity
+        Particle.__init__(self,obj,Vector3(0,0,0))
+        self.t = Timer()
+        self.t.data = self
+        self.t.start(0.0, WaypointParticle._timeout)
+
+    def add_waypoint(self,wp):
+        if self.waypoint == None:
+            self.waypoint = wp
+        else:
+            self.waypoint.next = wp
+        return self
+
+    def add_waypoints(self,*wps):
+        for wp in wps:
+            if self.waypoint == None:
+                self.waypoint = wp
+            else:
+                self.waypoint.next = wp
+        return self
+
+    @staticmethod
+    def _timeout():
+        self = Timer.get_expired().data
+        self.waypoint = self.waypoint.next
+        self.go_to()
+
+    def go_to(self,wp=None):
+        if wp == None: wp = self.waypoint
+        dv = (wp-self.position)
+        time = len(dv)/self.speed
+        dv = dv/time
+        self.update_velocity(dv.x,dv.y,dv.z)
+        self.t.start(time,WaypointParticle._timeout)
+
+
+    def destroy(self,hard=False):
+        self.t.destroy()
+        self.t = None
+        Particle.destroy(self)
+        node = self.waypoint
+        while node != None and node.next != node:
+            node = node.next
+            node.prev.destroy()
+        if node != None:
+            node.destroy()
+
+
+
 class WaypointUnit(Unit,Cyclist):
     period = 0.05
     _start = None

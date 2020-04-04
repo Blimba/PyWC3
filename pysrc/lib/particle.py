@@ -24,11 +24,12 @@ def G_func(self,particle):
 G.calculate = G_func
 
 class Spring(Force):
-    def __init__(self, x, y, z, temp=False):
+    def __init__(self, x, y, z, strength=1):
         Force.__init__(self,0,0,0)
         self.center = Vector3(x, y, z)
+        self.strength = strength
     def calculate(self,particle):
-        return (self.center-particle.position)*particle.mass
+        return (self.center-particle.position)*particle.mass*self.strength
 
 class Particle(Periodic):
     _group = None
@@ -40,7 +41,7 @@ class Particle(Periodic):
 
     def __init__(self,obj,velocity=None,mass=1,follow_direction=False,collision_sampling=1,size=10):
         Periodic.__init__(self)
-        self.velocity = velocity or Vector3(0, 0, 100)
+        self.velocity = velocity or Vector3(0, 0, 0)
         self.follow_direction = follow_direction
         if isinstance(obj,Vector3):
             self.position = obj
@@ -71,6 +72,16 @@ class Particle(Periodic):
         if self.obj != None and self.obj != self:
             self.obj.destroy()
             self.obj = None
+
+    def update_velocity(self,x,y,z):
+        self.velocity.x = x
+        self.velocity.y = y
+        self.velocity.z = z
+
+    def update_position(self,x,y,z):
+        self.position.x = x
+        self.position.y = y
+        self.position.z = z
 
     def _collided(self, pos=None):
         if pos == None: pos = self.position

@@ -320,6 +320,9 @@ class Unit(Handle):
     def is_selectable(self):
         BlzIsUnitSelectable(self._handle)
 
+    def is_alive(self):
+        return GetWidgetLife(self._handle) > 0.405
+
     def animate(self,animation,rarity=None):
         if isinstance(animation,str):
             if rarity != None:
