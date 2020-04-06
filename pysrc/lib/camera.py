@@ -5,10 +5,32 @@ from ..std.index import *
 from .transition import *
 import math
 
+class cam_z(Periodic):
+    def __init__(self):
+        Periodic.__init__(self)
+        self.t = Timer()
+        self.t.data = self
+        self.active = True
+    def on_period(self):
+        if self.active:
+            z = GetCameraField(CAMERA_FIELD_ZOFFSET) - GetCameraTargetPositionZ()
+            SetCameraField(CAMERA_FIELD_ZOFFSET, z, - 0.01)
+            SetCameraField(CAMERA_FIELD_ZOFFSET, z, 0.01)
+    @staticmethod
+    def _timeout():
+        self = Timer.get_expired().data
+        self.active = True
+    def stop(self,duration):
+        self.t.start(duration,cam_z._timeout)
+        self.active = False
+    def start(self):
+        self.t.pause()
+        self.active = True
 
 class Camera:
     _id = 0
     _cameras = {}
+    z_fixer = None
     def __init__(self):
         self.source = None
         self.target = None
@@ -35,6 +57,8 @@ class Camera:
 
     @staticmethod
     def _make_triggers():
+        Camera.z_fixer = cam_z()
+        Camera.z_fixer.start()
         t = CreateTrigger()
         for i in range(bj_MAX_PLAYERS):
             BlzTriggerRegisterPlayerSyncEvent(t, Player(i), "camerasync", False)
@@ -102,6 +126,7 @@ class Camera:
 
     @staticmethod
     def apply_setup(setup,duration,method='smooth'):
+
         c = Camera().from_setup(setup)
         if 'xy' in Camera.transitions:
             Camera.velocities['x'] = Camera.transitions['xy'].args[0].calculate_velocity(Camera.transitions['xy'].t)
@@ -127,6 +152,9 @@ class Camera:
                 Camera.transitions[field].destroy()
             else:
                 Camera.velocities[field] = 0.0
+        if method == 'instant' or duration <= 0.01:
+            CameraSetupApplyForceDuration(setup,True,duration)
+            return None
         if method == 'smooth':
             Camera.transitions['xy'] = Transition(
                 PanCameraToTimed,

@@ -34,7 +34,7 @@ class Spring(Force):
 class Particle(Periodic):
     _group = None
     collidables = []
-    period = 0.01
+    period = Periodic.period  # don't change, might lead to odd effects
     max_size = 128
     def __gc__(self):
         print('freeing',self)
