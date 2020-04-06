@@ -20,8 +20,8 @@ class Effect(Handle):
         self._x, self._y, self._z = x, y, z
 
     def destroy(self):
-        Handle.destroy(self)
         DestroyEffect(self._handle)
+        Handle.destroy(self)
 
     @staticmethod
     def flash(x,y,z,path):
