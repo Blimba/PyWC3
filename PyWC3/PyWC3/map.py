@@ -161,7 +161,12 @@ class Map:
             self.objeditor(c)
         for c in re.findall("\"{3}ObjEditor([\s\S]+?)\"{3}", content, flags=re.MULTILINE):
             self.objeditor(c)
-        return self.translator.translate(content)
+        try:
+            lua = self.translator.translate(content)
+        except RuntimeError as err:
+            print('Error in file {}: {}'.format(file,err))
+            raise
+        return lua
 
 
     def import_tree_to_list(self,lst):
