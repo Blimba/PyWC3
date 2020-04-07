@@ -227,8 +227,10 @@ class Map:
                 ]
                 for matches in rematcher:
                     for match in matches:
-                        newfile = re.sub('(?<!\.)\.(?!\.)', '\\\\', match).strip('\\')
-                        newfile = re.sub('\.\.', '..\\\\', newfile)
+                        newfile = re.sub('(?<!\.)\.(?!\.)', r'\\', match).strip('\\')
+                        newfile = re.sub(r'\.\.\.\.', r'..\\..\\..\\', newfile)
+                        newfile = re.sub(r'\.\.\.', r'..\..\\', newfile)
+                        newfile = re.sub(r'\.\.', r'..\\', newfile)
                         path = os.path.normpath(os.path.join(srcdir, newfile))
                         if os.path.isdir(path):
                             for root,dir,files in os.walk(path):
