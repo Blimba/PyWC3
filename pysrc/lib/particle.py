@@ -67,6 +67,8 @@ class Particle(Periodic):
     def destroy(self):
         self.dead = True
         Periodic.destroy(self)
+        self.position.destroy()
+        self.velocity.destroy()
         self.position = None
         self.velocity = None
         if self.obj != None and self.obj != self:
