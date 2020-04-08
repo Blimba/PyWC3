@@ -117,6 +117,16 @@ class Region(Handle):
                 self._on_enter_check(u)
 
     @staticmethod
+    def suspend_events():
+        Region._event_enter.active = False
+        Region._event_leave.active = False
+
+    @staticmethod
+    def resume_events():
+        Region._event_enter.active = True
+        Region._event_leave.active = True
+
+    @staticmethod
     def get_triggering():
         return Handle.get(GetTriggeringRegion())  # can't make a new region from 1, so just return none if we dont have it
 
@@ -126,4 +136,4 @@ class Region(Handle):
         Region._event_leave = RegionEvent(RegionEvent.exit, "_on_exit_check", Region.get_triggering, Unit.get_leaving)
 
 
-AddScriptHook(Region._init, MAIN_BEFORE)
+AddScriptHook(Region._init, MAIN_AFTER)

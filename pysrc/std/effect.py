@@ -92,6 +92,9 @@ class Effect(Handle):
     def look_at(self, x, y, z, roll=0):
         return self.look_along(x - self._x, y - self._y, z - self._z, roll)
 
+    def player_color(self,i):
+        BlzSetSpecialEffectColorByPlayer(self._handle, Player(i))
+
     @property
     def color(self):
         return self.r, self.g, self.b, self.a

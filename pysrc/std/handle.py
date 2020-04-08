@@ -11,7 +11,7 @@ class Handle:
         # constructorfunc can be a function that returns a handle, or a handle directly
         self._handle = handle
         if Handle.get(handle) != None:
-            print("Warning: secondary object created for handle ", handle)
+            print("Warning: secondary object created for handle ", handle, "object", self)
         Handle.handles[self._handle] = self
 
     @staticmethod

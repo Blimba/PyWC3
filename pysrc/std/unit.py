@@ -12,6 +12,10 @@ from event import *
     Methods should be self-explanatory
 
 """
+class UnitRangeEvent(ClassEvent):
+    def __init__(self, unit, range, methodname, getter, *args):
+        ClassEvent.__init__(self, methodname, getter, *args)
+        self.register(TriggerRegisterUnitInRange,unit._handle,range)
 
 class PlayerUnitEvent(ClassEvent):
     def __init__(self, playerunitevent, methodname, getter, *args):
@@ -345,17 +349,25 @@ class Unit(Handle):
         if range > 0:
             SetUnitRescueRange(self._handle,range)
     # triggering
+    events = []
     @staticmethod
     def _make_events():
-        PlayerUnitEvent(EVENT_PLAYER_UNIT_DEATH, "on_death", Unit.get_dying)
-        PlayerUnitEvent(EVENT_PLAYER_UNIT_ATTACKED, "on_attacked", Unit.get_trigger, Unit.get_attacker)
-        PlayerUnitEvent(EVENT_PLAYER_UNIT_DAMAGED, "on_damaged", Unit.get_trigger, Unit.get_damage_source)
-        PlayerUnitEvent(EVENT_PLAYER_UNIT_DAMAGING, "on_damaging", Unit.get_damage_source, Unit.get_trigger)
-        PlayerUnitEvent([EVENT_PLAYER_UNIT_ISSUED_ORDER, EVENT_PLAYER_UNIT_ISSUED_POINT_ORDER], "on_ordered", Unit.get_ordered)
-        PlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_TARGET_ORDER, "on_ordered", Unit.get_ordered, Unit.get_order_target)
-        PlayerUnitEvent(EVENT_PLAYER_UNIT_PICKUP_ITEM, "on_item_pickup", Unit.get_manipulating) # also pass an item, once I make the class...
-        PlayerUnitEvent(EVENT_PLAYER_UNIT_DROP_ITEM, "on_item_drop", Unit.get_manipulating)  # also pass an item, once I make the class...
-
+        Unit.events.append(PlayerUnitEvent(EVENT_PLAYER_UNIT_DEATH, "on_death", Unit.get_dying))
+        Unit.events.append(PlayerUnitEvent(EVENT_PLAYER_UNIT_ATTACKED, "on_attacked", Unit.get_trigger, Unit.get_attacker))
+        Unit.events.append(PlayerUnitEvent(EVENT_PLAYER_UNIT_DAMAGED, "on_damaged", Unit.get_trigger, Unit.get_damage_source))
+        Unit.events.append(PlayerUnitEvent(EVENT_PLAYER_UNIT_DAMAGING, "on_damaging", Unit.get_damage_source, Unit.get_trigger))
+        Unit.events.append(PlayerUnitEvent([EVENT_PLAYER_UNIT_ISSUED_ORDER, EVENT_PLAYER_UNIT_ISSUED_POINT_ORDER], "on_ordered", Unit.get_ordered))
+        Unit.events.append(PlayerUnitEvent(EVENT_PLAYER_UNIT_ISSUED_TARGET_ORDER, "on_ordered", Unit.get_ordered, Unit.get_order_target))
+        Unit.events.append(PlayerUnitEvent(EVENT_PLAYER_UNIT_PICKUP_ITEM, "on_item_pickup", Unit.get_manipulating)) # also pass an item, once I make the class...
+        Unit.events.append(PlayerUnitEvent(EVENT_PLAYER_UNIT_DROP_ITEM, "on_item_drop", Unit.get_manipulating))  # also pass an item, once I make the class...
+    @staticmethod
+    def suspend_events():
+        for event in Unit.events:
+            event.active = False
+    @staticmethod
+    def resume_events():
+        for event in Unit.events:
+            event.active = True
     # manual properties
 
 
@@ -424,11 +436,11 @@ class Unit(Handle):
         SetUnitMoveSpeed(self._handle, newspeed)
 
     @property
-    def face(self):
+    def facing(self):
         return GetUnitFacing(self._handle)
 
-    @face.setter
-    def face(self,newface):
+    @facing.setter
+    def facing(self, newface):
         BlzSetUnitFacingEx(self._handle, newface)
 
     @property

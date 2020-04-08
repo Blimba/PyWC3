@@ -41,6 +41,18 @@ class SpellEvent:
         SpellEvent._events[ability_id] = o
         return o
 
+    @property
+    def x(self):
+        return GetSpellTargetX()
+
+    @property
+    def y(self):
+        return GetSpellTargetY()
+
+    @property
+    def target(self):
+        return GetSpellTargetUnit()
+
     @staticmethod
     def _init():
         # PlayerUnitEvent is defined in unit.py
