@@ -144,8 +144,6 @@ class Particle(Periodic):
         # do multisample collision
         if self.auto_collision_sampling:
             self.collision_sampling = math.floor(len(self.velocity)/300)+1
-            if self.collision_sampling > 1 and type(self) == Hero:
-                print(self.collision_sampling)
         r = Particle.period / self.collision_sampling
         pos = self.position
 
