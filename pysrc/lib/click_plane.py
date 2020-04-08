@@ -32,16 +32,16 @@ class ClickPlane(Rectangle, Cyclist):
         if isinstance(p, Vector2):
             return p.x >= self.minx and p.x <= self.maxx and p.y >= self.miny and p.y <= self.maxy
 
-    def obscured(self, clickpoint, camera):
-        if(self.z < clickpoint.z or self.z > camera.source.z):
+    def obscured(self, clickpoint, eye):
+        if(self.z < clickpoint.z or self.z > eye.z):
             return False
-        dx = clickpoint.x - camera.source.x
-        dy = clickpoint.y - camera.source.y
-        dz = camera.source.z - clickpoint.z
+        dx = clickpoint.x - eye.x
+        dy = clickpoint.y - eye.y
+        dz = eye.z - clickpoint.z
         zrat = 1-(self.z-clickpoint.z)/dz
-        x = camera.source.x + dx * zrat
-        y = camera.source.y + dy * zrat
-        self.redirect = Vector2(x,y)
+        x = eye.x + dx * zrat
+        y = eye.y + dy * zrat
+        self.redirect = Vector2(x,y,True)
         if self.redirect in self:  # if the point is within the bounds
             self.redirect = Vector3(x,y,self.z,True)
             return True
@@ -92,14 +92,13 @@ class ClickPlane(Rectangle, Cyclist):
             if (node == ClickPlane._node1) or node == None or i > 5: break
         print(", ".join(lst))
 
-
-
     @staticmethod
-    def _cam_sync(camera, clickpoint, unit, order_id):
+    def _cam_sync(ns, clickpoint, unit, order_id):
+        eye = Vector3(ns.data[0],ns.data[1],ns.data[2],True)
         try:
             node = ClickPlane._node1
             while node != None:
-                if node.obscured(clickpoint, camera):
+                if node.obscured(clickpoint, eye):
                     # ClickPlane.ignore_next = True
                     IssuePointOrderById(unit, order_id, node.redirect.x, node.redirect.y)
                     clickpoint.x = node.redirect.x
@@ -122,14 +121,13 @@ class ClickPlane(Rectangle, Cyclist):
         except: print(Error)
         clickpoint.destroy()
 
-
     @staticmethod
     def _ordered():
         if ClickPlane.ignore_next:
             ClickPlane.ignore_next = False
             return False
         clickpoint = Vector3.from_terrain(GetOrderPointX(), GetOrderPointY())
-        try: Camera().sync_from_player(GetOwningPlayer(GetOrderedUnit()), ClickPlane._cam_sync, clickpoint, GetOrderedUnit(), GetIssuedOrderId())
+        try: Camera.sync_eye_position(GetPlayerId(GetOwningPlayer(GetOrderedUnit())),ClickPlane._cam_sync, clickpoint, GetOrderedUnit(), GetIssuedOrderId())
         except: print(Error)
 
     @staticmethod
