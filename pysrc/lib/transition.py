@@ -171,6 +171,26 @@ class Transition(Periodic):
         return _EASE_SM_A(duration, start, stop)
 
     _methods = [_EASE_LINEAR,_EASE_LINEAR_RAD,_EASE_CON_A,_EASE_CON_A_RAD,_EASE_SPL_A,_EASE_SPL_A_RAD,_EASE_SM_A,_EASE_SM_A_RAD]
+    @staticmethod
+    def Method(method,duration,start,stop,v0=0.0,v_end=0.0):
+        if method=='linear':
+            return _EASE_LINEAR(duration,start,stop)
+        elif method=='constant':
+            return _EASE_CON_A(duration,start,stop,v0)
+        elif method=='split':
+            return _EASE_SPL_A(duration,start,stop,v0,v_end)
+        elif method=='smooth':
+            return _EASE_SM_A(duration,start,stop,v0,v_end)
+    @staticmethod
+    def MethodRad(method,duration,start,stop,v0=0.0,v_end=0.0):
+        if method=='linear':
+            return _EASE_LINEAR_RAD(duration,start,stop)
+        elif method=='constant':
+            return _EASE_CON_A_RAD(duration,start,stop,v0)
+        elif method=='split':
+            return _EASE_SPL_A_RAD(duration,start,stop,v0,v_end)
+        elif method=='smooth':
+            return _EASE_SM_A_RAD(duration,start,stop,v0,v_end)
     def __init__(self,func,*args):
         Periodic.__init__(self)
         self.func = func
@@ -178,6 +198,7 @@ class Transition(Periodic):
         self.t = 0
         self._lst = [arg for arg in args]
         self.callback = None
+        self.active = True
 
     def on_period(self):
         cont = False
@@ -197,4 +218,5 @@ class Transition(Periodic):
             self.destroy()
 
     def destroy(self):
+        self.active = False
         Periodic.destroy(self)
