@@ -5,264 +5,146 @@ from ..std.index import *
 from .transition import *
 import math
 from ..lib.itimer import CTimer
-class cam_z(Periodic,CTimer):
-    def __init__(self):
+from ..lib.sync import NumberSync
+class Camera(Periodic):
+    norm_fields = [CAMERA_FIELD_TARGET_DISTANCE, CAMERA_FIELD_FARZ]
+    ang_fields = [CAMERA_FIELD_ANGLE_OF_ATTACK, CAMERA_FIELD_ROTATION,CAMERA_FIELD_FIELD_OF_VIEW]
+    _players = {}
+    @staticmethod
+    def from_player(i):
+        if i in Camera._players:
+            return Camera._players[i]
+        return Camera(i)
+    def __init__(self,players=None):
+        if players == None:
+            players = [i for i in range(bj_MAX_PLAYERS)]
         Periodic.__init__(self)
-        self.t = Timer()
-        self.t.data = self
-        self.active = True
-        self.shake(0.0,0.0)
+        if isinstance(players,list):
+            self.players = players
+        else:
+            self.players = [players]
+        self.transitions = {}
+        self.velocities = {}
+        for player in self.players:
+            if player in Camera._players:
+                Camera._players[player].destroy()
+            Camera._players[player] = self
+        self.lock_z = True
+        self.shake_amount = 0.0
+        self.shake_dim = 0.0
+
+    @staticmethod
+    def sync_eye_position(playerid, callback, *args):
+        def _sync(ns):
+            callback(ns,*args)
+        NumberSync(Player(playerid),_sync, GetCameraEyePositionX(), GetCameraEyePositionY(), GetCameraEyePositionZ())
+
+    def destroy(self):
+        for key in self.transitions:
+            self.transitions[key].destroy()
+            del self.transitions[key]
+            del self.velocities[key]
+        Periodic.destroy(self)
+
     def on_period(self):
-        if self.active:
-            z = GetCameraField(CAMERA_FIELD_ZOFFSET) - GetCameraTargetPositionZ()
-            if self.shake_amount > 0:
-                z += (math.random()-0.5)*self.shake_amount
-                self.shake_amount *= self.shake_dim
-                if self.shake_amount < 10: self.shake_amount = 0
-            SetCameraField(CAMERA_FIELD_ZOFFSET, z, - 0.01)
-            SetCameraField(CAMERA_FIELD_ZOFFSET, z, 0.01)
+        z = 0
+        if self.shake_amount > 0:
+            z += (math.random() - 0.5) * self.shake_amount
+            self.shake_amount *= self.shake_dim
+            if self.shake_amount < 10: self.shake_amount = 0
+        if GetPlayerId(GetLocalPlayer()) in self._players and self.lock_z:
+            if 'z' not in self.transitions or not self.transitions['z'].active:
+                z += GetCameraField(CAMERA_FIELD_ZOFFSET) - GetCameraTargetPositionZ()
+                SetCameraField(CAMERA_FIELD_ZOFFSET, z, - 0.01)
+                SetCameraField(CAMERA_FIELD_ZOFFSET, z, 0.01)
 
     def shake(self,amount,dim = 0.9):
         self.shake_amount = amount
         self.shake_dim = dim
 
-    def stop(self,duration):
-        self.t.start(duration,self.start)
-        self.active = False
-    def start(self):
-        self.t.pause()
-        self.active = True
-
-class Camera:
-    _id = 0
-    _cameras = {}
-    z_fixer = None
-    def __init__(self):
-        self.source = None
-        self.target = None
-
-    def __str__(self):
-        return "Camera:"+str(self.target)+":"+str(self.source)
-
-    @staticmethod
-    def from_id(id):
-        return Camera._cameras[str(id)]
-
-    @staticmethod
-    def _on_sync():
-        # camera on sync called
-        syncstr = BlzGetTriggerSyncData()
-        d = syncstr.split(",")
-        id = str(d[0])
-        self = Camera.from_id(id)
-        self.target = Vector3(float(d[1]),float(d[2]),float(d[3]),True)
-        self.source = Vector3(float(d[4]),float(d[5]),float(d[6]),True)
-        self._set_properties()
-        del Camera._cameras[str(self.id)]
-        self.callback(*self.args)
-
-    @staticmethod
-    def _make_triggers():
-        Camera.z_fixer = cam_z()
-        Camera.z_fixer.start()
-        t = CreateTrigger()
-        for i in range(bj_MAX_PLAYERS):
-            BlzTriggerRegisterPlayerSyncEvent(t, Player(i), "camerasync", False)
-        TriggerAddAction(t, Camera._on_sync)
-
-
-    def sync_from_player(self,player,callback,*args):
-        self.callback = callback
-        self.args = args
-        self.id = Camera._id
-        Camera._cameras[str(Camera._id)] = self
-        Camera._id += 1
-        if isinstance(player, int):
-            player = Player(player)
-        if player == GetLocalPlayer():
-            # careful: asynchronous execution!
-            syncstr = str(self.id)+","+str(GetCameraTargetPositionX())+","+str(GetCameraTargetPositionY())+","+str(GetCameraTargetPositionZ())+","+str(GetCameraEyePositionX())+","+str(GetCameraEyePositionY())+","+str(GetCameraEyePositionZ())
-            BlzSendSyncData("camerasync", syncstr)
-
-    def from_local(self):
-        self.target = Vector3(GetCameraTargetPositionX(),GetCameraTargetPositionY(),GetCameraTargetPositionZ(),True)
-        self.source = Vector3(GetCameraEyePositionX(),GetCameraEyePositionY(),GetCameraEyePositionZ(),True)
-        self._set_properties()
-        return self
-
-    def _set_properties(self):
-        v = self.target-self.source
-        self.dist = len(v)
-        xy = math.sqrt(v.x*v.x+v.y*v.y)
-        self.pitch = Atan2(v.z, xy)
-        self.yaw = Atan2(v.y, v.x)
-
-
-    def from_setup(self,setup):
-        x = CameraSetupGetDestPositionX(setup)
-        y = CameraSetupGetDestPositionY(setup)
-        self.target = Vector3.from_terrain(x,y,True)
-        self.target.z += CameraSetupGetField(setup,CAMERA_FIELD_ZOFFSET)
-        yaw = -CameraSetupGetField(setup,CAMERA_FIELD_ROTATION)  # in degrees
-        self.yaw = yaw
-        pitch = -CameraSetupGetField(setup,CAMERA_FIELD_ANGLE_OF_ATTACK)  # in degrees
-        self.pitch = pitch
-        dist = CameraSetupGetField(setup,CAMERA_FIELD_TARGET_DISTANCE)
-        self.dist = dist
-        eyex = -math.cos(yaw*bj_DEGTORAD)*math.cos(pitch*bj_DEGTORAD)*dist+x
-        eyey = math.sin(yaw*bj_DEGTORAD)*math.cos(pitch*bj_DEGTORAD)*dist+y
-        eyez = math.sin(pitch*bj_DEGTORAD)*dist + CameraSetupGetField(setup,CAMERA_FIELD_ZOFFSET)
-        self.source = Vector3(eyex,eyey,eyez)
-
-        # self.roll = CameraSetupGetField(setup,CAMERA_FIELD_ROLL)  # in degrees
-        # self.fov = CameraSetupGetField(setup,CAMERA_FIELD_FIELD_OF_VIEW)
-        # self.farz = CameraSetupGetField(setup,CAMERA_FIELD_FARZ)
-
-        return self
-
-    transitions = {}
-    velocities = {}
-    norm_fields = [CAMERA_FIELD_TARGET_DISTANCE, CAMERA_FIELD_FARZ]
-    ang_fields = [CAMERA_FIELD_ANGLE_OF_ATTACK, CAMERA_FIELD_ROTATION]
-
-    @staticmethod
-    def _set_z(z):
-        SetCameraField(CAMERA_FIELD_ZOFFSET, z, - 0.01)
-        SetCameraField(CAMERA_FIELD_ZOFFSET, z, 0.01)
-
-    @staticmethod
-    def apply_setup(setup,duration,method='smooth'):
-
-        c = Camera().from_setup(setup)
-        if 'xy' in Camera.transitions:
-            Camera.velocities['x'] = Camera.transitions['xy'].args[0].calculate_velocity(Camera.transitions['xy'].t)
-            Camera.velocities['y'] = Camera.transitions['xy'].args[1].calculate_velocity(Camera.transitions['xy'].t)
-            Camera.transitions['xy'].destroy()
+    def pan_z_instant(self,z):
+        if self.shake_amount > 0:
+            z += (math.random() - 0.5) * self.shake_amount
+            self.shake_amount *= self.shake_dim
+            if self.shake_amount < 10: self.shake_amount = 0
+        if GetPlayerId(GetLocalPlayer()) in self._players:
+            SetCameraField(CAMERA_FIELD_ZOFFSET, z, - 0.01)
+            SetCameraField(CAMERA_FIELD_ZOFFSET, z, 0.01)
+    def pan_to_instant(self,x,y):
+        if GetPlayerId(GetLocalPlayer()) in self._players:
+            PanCameraToTimed(x,y,Periodic.period)
+    def pan_field_instant(self,field,value):
+        if GetPlayerId(GetLocalPlayer()) in self._players:
+            SetCameraField(field,value,Periodic.period)
+    def pan_z(self,value,duration,method='smooth'):
+        if method == 'instant' or duration <= Periodic.period:
+            self.transitions['z'].destroy()
+            self.pan_z_instant(value)
+            return self
+        if 'z' in self.transitions:
+            self.velocities['z'] = self.transitions['z'].args[1].calculate_velocity(self.transitions['z'].t)
+            self.transitions['z'].destroy()
         else:
-            Camera.velocities['x'] = 0.0
-            Camera.velocities['y'] = 0.0
-        if 'z' in Camera.transitions:
-            Camera.velocities['z'] = Camera.transitions['z'].args[0].calculate_velocity(Camera.transitions['z'].t)
-            Camera.transitions['z'].destroy()
+            self.velocities['z'] = 0.0
+        self.transitions['z'] = Transition(
+            self.pan_z_instant,self,
+            Transition.Method(method,duration,GetCameraField(CAMERA_FIELD_ZOFFSET),value, self.velocities['z'], 0.0),
+        )
+        return self
+    def pan_field(self,field,value,duration,method='smooth'):
+        if field == CAMERA_FIELD_FIELD_OF_VIEW:
+            print(GetCameraField(field))
+        if method == 'instant' or duration <= Periodic.period:
+            self.transitions[field].destroy()
+            self.pan_field_instant(field,value)
+            return self
+        if field in self.transitions:
+            self.velocities[field] = self.transitions[field].args[2].calculate_velocity(self.transitions[field].t)
+            self.transitions[field].destroy()
         else:
-            Camera.velocities['z'] = 0.0
-        for field in Camera.norm_fields:
-            if field in Camera.transitions:
-                Camera.velocities[field] = Camera.transitions[field].args[1].calculate_velocity(Camera.transitions[field].t)
-                Camera.transitions[field].destroy()
-            else:
-                Camera.velocities[field] = 0.0
-        for field in Camera.ang_fields:
-            if field in Camera.transitions:
-                Camera.velocities[field] = Camera.transitions[field].args[1].calculate_velocity(Camera.transitions[field].t)
-                Camera.transitions[field].destroy()
-            else:
-                Camera.velocities[field] = 0.0
+            self.velocities[field] = 0.0
+        if field in Camera.norm_fields:
+            self.transitions[field] = Transition(
+                self.pan_field_instant,self,field,
+                Transition.Method(method, duration, GetCameraField(field), value,self.velocities[field], 0.0),
+                Periodic.period
+            )
+        else:
+            self.transitions[field] = Transition(
+                self.pan_field_instant,self,field,
+                Transition.MethodRad(method, duration, GetCameraField(field) * bj_RADTODEG, value, self.velocities[field], 0.0),
+                Periodic.period
+            )
+        return self
+    def pan_to(self,x,y,duration,method='smooth'):
+        if method == 'instant' or duration <= Periodic.period:
+            self.transitions['xy'].destroy()
+            self.pan_to_instant(x,y)
+            return self
+        if 'xy' in self.transitions:
+            self.velocities['x'] = self.transitions['xy'].args[1].calculate_velocity(self.transitions['xy'].t)
+            self.velocities['y'] = self.transitions['xy'].args[2].calculate_velocity(self.transitions['xy'].t)
+            self.transitions['xy'].destroy()
+        else:
+            self.velocities['x'] = 0.0
+            self.velocities['y'] = 0.0
+        self.transitions['xy'] = Transition(
+            self.pan_to_instant,self,
+            Transition.Method(method, duration, GetCameraTargetPositionX(), x, self.velocities['x'], 0.0),
+            Transition.Method(method, duration, GetCameraTargetPositionY(), y, self.velocities['y'], 0.0),
+            Periodic.period
+        )
+        return self
+    def pan_to_setup(self,setup,duration,method='smooth'):
         if method == 'instant' or duration <= 0.01:
+            for key in self.transitions:
+                self.transitions[key].destroy()
             CameraSetupApplyForceDuration(setup,True,duration)
-            return None
-        if method == 'smooth':
-            Camera.transitions['xy'] = Transition(
-                PanCameraToTimed,
-                Transition.Smooth_Acceleration(duration, GetCameraTargetPositionX(), c.target.x, Camera.velocities['x'], 0.0),
-                Transition.Smooth_Acceleration(duration, GetCameraTargetPositionY(), c.target.y, Camera.velocities['y'], 0.0),
-                Periodic.period
-            )
-            Camera.transitions['z'] = Transition(
-                Camera._set_z,
-                Transition.Smooth_Acceleration(duration,GetCameraField(CAMERA_FIELD_ZOFFSET),CameraSetupGetField(setup, CAMERA_FIELD_ZOFFSET), Camera.velocities['z'], 0.0),
-            )
-            for field in Camera.norm_fields:
-                Camera.transitions[field] = Transition(
-                    SetCameraField,
-                    field,
-                    Transition.Smooth_Acceleration(duration, GetCameraField(field), CameraSetupGetField(setup, field), Camera.velocities[field] , 0.0),
-                    Periodic.period
-                )
-            for field in Camera.ang_fields:
-                Camera.transitions[field] = Transition(
-                    SetCameraField,
-                    field,
-                    Transition.Smooth_Acceleration_Angular(duration, GetCameraField(field)*bj_RADTODEG, CameraSetupGetField(setup, field), Camera.velocities[field], 0.0),
-                    Periodic.period
-                )
-        elif method == 'split':
-            Camera.transitions['xy'] = Transition(
-                PanCameraToTimed,
-                Transition.Split_Acceleration(duration, GetCameraTargetPositionX(), c.target.x, Camera.velocities['x'], 0.0),
-                Transition.Split_Acceleration(duration, GetCameraTargetPositionY(), c.target.y, Camera.velocities['y'], 0.0),
-                Periodic.period
-            )
-            Camera.transitions['z'] = Transition(
-                Camera._set_z,
-                Transition.Split_Acceleration(duration,GetCameraField(CAMERA_FIELD_ZOFFSET),CameraSetupGetField(setup, CAMERA_FIELD_ZOFFSET), Camera.velocities['z'], 0.0),
-            )
-            for field in Camera.norm_fields:
-                Camera.transitions[field] = Transition(
-                    SetCameraField,
-                    field,
-                    Transition.Split_Acceleration(duration, GetCameraField(field), CameraSetupGetField(setup, field), Camera.velocities[field] , 0.0),
-                    Periodic.period
-                )
-            for field in Camera.ang_fields:
-                Camera.transitions[field] = Transition(
-                    SetCameraField,
-                    field,
-                    Transition.Split_Acceleration_Angular(duration, GetCameraField(field)*bj_RADTODEG, CameraSetupGetField(setup, field), Camera.velocities[field], 0.0),
-                    Periodic.period
-                )
-        elif method == 'constant':
-            Camera.transitions['xy'] = Transition(
-                PanCameraToTimed,
-                Transition.Constant_Acceleration(duration, GetCameraTargetPositionX(), c.target.x, Camera.velocities['x']),
-                Transition.Constant_Acceleration(duration, GetCameraTargetPositionY(), c.target.y, Camera.velocities['y']),
-                Periodic.period
-            )
-            Camera.transitions['z'] = Transition(
-                Camera._set_z,
-                Transition.Constant_Acceleration(duration,GetCameraField(CAMERA_FIELD_ZOFFSET),CameraSetupGetField(setup, CAMERA_FIELD_ZOFFSET), Camera.velocities['z']),
-            )
-            for field in Camera.norm_fields:
-                Camera.transitions[field] = Transition(
-                    SetCameraField,
-                    field,
-                    Transition.Constant_Acceleration(duration, GetCameraField(field), CameraSetupGetField(setup, field), Camera.velocities[field]),
-                    Periodic.period
-                )
-            for field in Camera.ang_fields:
-                Camera.transitions[field] = Transition(
-                    SetCameraField,
-                    field,
-                    Transition.Constant_Acceleration_Angular(duration, GetCameraField(field)*bj_RADTODEG, CameraSetupGetField(setup, field), Camera.velocities[field]),
-                    Periodic.period
-                )
-        elif method == 'linear':
-            Camera.transitions['xy'] = Transition(
-                PanCameraToTimed,
-                Transition.Linear(duration, GetCameraTargetPositionX(), c.target.x),
-                Transition.Linear(duration, GetCameraTargetPositionY(), c.target.y),
-                Periodic.period
-            )
-            Camera.transitions['z'] = Transition(
-                Camera._set_z,
-                Transition.Linear(duration,GetCameraField(CAMERA_FIELD_ZOFFSET),CameraSetupGetField(setup, CAMERA_FIELD_ZOFFSET)),
-            )
-            for field in Camera.norm_fields:
-                Camera.transitions[field] = Transition(
-                    SetCameraField,
-                    field,
-                    Transition.Linear(duration, GetCameraField(field), CameraSetupGetField(setup, field)),
-                    Periodic.period
-                )
-            for field in Camera.ang_fields:
-                Camera.transitions[field] = Transition(
-                    SetCameraField,
-                    field,
-                    Transition.Linear_Angular(duration, GetCameraField(field)*bj_RADTODEG, CameraSetupGetField(setup, field)),
-                    Periodic.period
-                )
-
-
-
-
-AddScriptHook(Camera._make_triggers, MAIN_BEFORE)
+            return self
+        self.pan_to(CameraSetupGetDestPositionX(setup),CameraSetupGetDestPositionY(setup),duration,method)
+        self.pan_z(CameraSetupGetField(setup, CAMERA_FIELD_ZOFFSET),duration,method)
+        for field in Camera.norm_fields:
+            self.pan_field(field,CameraSetupGetField(setup, field),duration,method)
+        for field in Camera.ang_fields:
+            self.pan_field(field, CameraSetupGetField(setup, field),duration,method)
+        return self
