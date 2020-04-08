@@ -19,7 +19,7 @@ class PhysicsUnit(Unit,Particle):
 
     def __init__(self,playerid,unitid,x,y,face=0.0,skinid=0):
         Unit.__init__(self,playerid,unitid,x,y,face,skinid)
-        Particle.__init__(self,self,Vector3(0,0,0),10,False,1,BlzGetUnitCollisionSize(self._handle))
+        Particle.__init__(self,self,Vector3(0,0,0),10,False,0,BlzGetUnitCollisionSize(self._handle))
         UnitAddAbility(self._handle,FourCC('Amrf'))
         UnitRemoveAbility(self._handle,FourCC('Amrf'))
         self.forces.append(G)
@@ -37,15 +37,17 @@ class PhysicsUnit(Unit,Particle):
         pos = self.position+self.velocity  # new position
         pv = pos - tp  # penetration vector
         prv = pv.project(normal)  # project the penetration to the normal
-        impulse = len(prv)-900
-        if impulse > 0:
-            impulse = 1.05 / (1+math.exp((-impulse+200)/75.))
-            self.obj.life = self.obj.life - impulse * self.obj.max_hp
+        self.fall_damage(len(prv)-900)
         if self.dead == False:
             self.velocity.subtract(prv)  # impulse normal penetration to velocity
             fc = 0.8 / (1+math.exp((-len(prv)+10)))
             friction = self.velocity *  -fc# apply friction of the terrain to the unit velocity
             self.velocity.add(friction)
+
+    def fall_damage(self,impulse):
+        if impulse > 0:
+            impulse = 1.05 / (1+math.exp((-impulse+200)/75.))
+            self.obj.life = self.obj.life - impulse * self.obj.max_hp
 
 
     def on_death(self):
@@ -85,7 +87,6 @@ class PhysicsUnit(Unit,Particle):
         # should probably implement the following better...
         if self.collision_object != None and hasattr(self.collision_object, "velocity"):
             self.walking_velocity.subtract(self.collision_object.velocity * Particle.period / self.collision_sampling)
-
         if tp.z > self.position.z:
             self._onterrain = True
             self.on_walk_terrainhit(self.walking_velocity,self.position-tp)
@@ -93,8 +94,6 @@ class PhysicsUnit(Unit,Particle):
         for offset in PhysicsUnit.offsets:
             np = self.position+offset
             tp = self.terrain_point(np)
-            if IsTerrainPathable(tp.x, tp.y, PATHING_TYPE_WALKABILITY):
-                tp.z += 100
             if tp.z > np.z:
                 self.on_walk_terrainhit(offset*(len(self.walking_velocity)/len(offset)),np - tp)
         Particle.update(self)

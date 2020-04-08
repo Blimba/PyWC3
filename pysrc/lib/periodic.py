@@ -2,7 +2,7 @@ from ..std.index import *
 from ..std.timer import *
 from .cyclist import *
 class Periodic(Cyclist):
-    period = 0.02
+    period = 0.01
     _first = None
 
     def __init__(self):
@@ -29,14 +29,16 @@ class Periodic(Cyclist):
     @staticmethod
     def _period():
         node = Periodic._first
+        i = 0
         while node != None:
+            i += 1
             nnode = node.next
             # try/except blocks leak memory due to anonymous functions, change at some point
             try: node.on_period()
             except: print(Error)
             node = nnode
             if node == Periodic._first or Periodic._first == None: break
-
+        Periodic.num = i
     @staticmethod
     def _init():
         Periodic.timer = Timer(True)
@@ -72,14 +74,16 @@ class SlowPeriodic(Cyclist):
     @staticmethod
     def _period():
         node = SlowPeriodic._first
+        i = 0
         while node != None:
+            i += 1
             nnode = node.next
             # try/except blocks leak memory due to anonymous functions, change at some point
             try: node.on_period()
             except: print(Error)
             node = nnode
             if node == SlowPeriodic._first or SlowPeriodic._first == None: break
-
+        SlowPeriodic.num = i
     @staticmethod
     def _init():
         SlowPeriodic.timer = Timer(True)

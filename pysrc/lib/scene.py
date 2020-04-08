@@ -1,3 +1,8 @@
+"""
+
+Scene system to make delicate timing easier. Be careful: runtime errors within it will not automatically display!
+
+"""
 from ..std.index import *
 from .itimer import *
 
@@ -6,8 +11,7 @@ class Scene:
         self.func = func
 
     def resume(t,self):
-        try: coroutine.resume(self.co,self)
-        except: print(Error)
+        coroutine.resume(self.co,self)
 
     def pause(self):
         coroutine.pause()
@@ -23,10 +27,7 @@ class Scene:
         coroutine.pause()
 
     def start(self):
-        try:
-            self.co = coroutine.create(self.func)
-        except:
-            print(Error)
+        self.co = coroutine.create(self.func)
         self.t = 0
         coroutine.resume(self.co,self)
 

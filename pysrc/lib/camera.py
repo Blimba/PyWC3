@@ -4,24 +4,30 @@ from .math3d import Vector3
 from ..std.index import *
 from .transition import *
 import math
-
-class cam_z(Periodic):
+from ..lib.itimer import CTimer
+class cam_z(Periodic,CTimer):
     def __init__(self):
         Periodic.__init__(self)
         self.t = Timer()
         self.t.data = self
         self.active = True
+        self.shake(0.0,0.0)
     def on_period(self):
         if self.active:
             z = GetCameraField(CAMERA_FIELD_ZOFFSET) - GetCameraTargetPositionZ()
+            if self.shake_amount > 0:
+                z += (math.random()-0.5)*self.shake_amount
+                self.shake_amount *= self.shake_dim
+                if self.shake_amount < 10: self.shake_amount = 0
             SetCameraField(CAMERA_FIELD_ZOFFSET, z, - 0.01)
             SetCameraField(CAMERA_FIELD_ZOFFSET, z, 0.01)
-    @staticmethod
-    def _timeout():
-        self = Timer.get_expired().data
-        self.active = True
+
+    def shake(self,amount,dim = 0.9):
+        self.shake_amount = amount
+        self.shake_dim = dim
+
     def stop(self,duration):
-        self.t.start(duration,cam_z._timeout)
+        self.t.start(duration,self.start)
         self.active = False
     def start(self):
         self.t.pause()

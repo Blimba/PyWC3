@@ -5,27 +5,29 @@ from ..std.index import *
 class Vector3:
     active = []
     reuse = []
-    _fifo_buffer_size = 1000  # this is the amount of temporary vectors used
+    _fifo_buffer_size = 100  # this is the amount of temporary vectors used, don't increase it too much: it will severely affect performance
     _loc = None
     def __new__(cls,x=0.0,y=0.0,z=0.0,temp=False):
         if len(Vector3.reuse) > Vector3._fifo_buffer_size:
-            o = Vector3.reuse.pop(0)
-            Vector3.active.append(o)
+            o = cls.reuse.pop(0)
+            cls.active.append(o)
             return o
         else:
             o = object.__new__(cls)
-            Vector3.active.append(o)
+            cls.active.append(o)
             return o
 
     def permanent(self):
-        if self not in Vector3.active:
-            Vector3.active.append(self)
-            Vector3.reuse.remove(self)
+        cls = type(self)
+        if self not in cls.active:
+            cls.active.append(self)
+            cls.reuse.remove(self)
         return self
     def destroy(self):
-        if self not in Vector3.reuse:
-            Vector3.active.remove(self)
-            Vector3.reuse.append(self)
+        cls = type(self)
+        if self not in cls.reuse:
+            cls.active.remove(self)
+            cls.reuse.append(self)
     def fixnan(self):
         if self.x != self.x: self.x = 0.0
         if self.y != self.y: self.y = 0.0
@@ -99,7 +101,14 @@ class Vector3:
             self.y /= v.y
             self.z /= v.z
         return self
-
+    def update(self,x,y,z):
+        self.x = x
+        self.y = y
+        self.z = z
+    def update_vector(self,v):
+        self.x = v.x
+        self.y = v.y
+        self.z = v.z
     # inmutable functions
     def __add__(self, v):
         return Vector3(self.x+v.x, self.y+v.y, self.z+v.z,True)
@@ -150,19 +159,18 @@ class Vector3:
     @staticmethod
     def from_terrain(x,y,temp=False):
         MoveLocation(Vector3._loc,x,y)
-        return Vector3(x,y,GetLocationZ(Vector3._loc),temp)
+        z = 0.0
+        if IsTerrainPathable(x,y,PATHING_TYPE_WALKABILITY): z = 200.0
+        return Vector3(x,y,GetLocationZ(Vector3._loc) +z,temp)
 
     @staticmethod
-    def terrain_normal(x,y,sampling=2):
+    def terrain_normal(x,y,sampling=8):
         x -= sampling / 2
         y -= sampling / 2
         p1 = Vector3.from_terrain(x,y,True)
         p2 = Vector3.from_terrain(x+sampling,y,True)
         p3 = Vector3.from_terrain(x,y+sampling,True)
-
-        v1 = p2-p1
-        v2 = p3-p1
-        return Vector3.cross(v1,v2).normalize()
+        return Vector3.cross(p2-p1,p3-p1).normalize()
 
     def reflect(self,normal):
         return self - (normal * (self.dot(normal)*2))
@@ -307,6 +315,10 @@ class Box:
         maxy = p1.y if p1.y > p2.y else p2.y
         maxz = p1.z if p1.z > p2.z else p2.z
         return Box(minx, miny, minz, maxx, maxy, maxz)
+
+    @staticmethod
+    def from_rect(r,minz,maxz):
+        return Box(GetRectMinX(r), GetRectMinY(r), minz, GetRectMaxX(r), GetRectMaxY(r), maxz)
 
     def closest_point(self,p):
         if p in self:

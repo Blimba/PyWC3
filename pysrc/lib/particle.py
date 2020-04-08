@@ -5,6 +5,8 @@ from .periodic import *
 from ..std.timer import *
 from ..std.unit import *
 class Force(Vector3):
+    active = []
+    reuse = []
     def __init__(self, x, y, z):
         self.active = True
         Vector3.__init__(self, x, y, z)
@@ -18,12 +20,11 @@ class Force(Vector3):
         Vector3.destroy(self)
 
 G = Force(0,0,-2000)
-def G_func(self,particle):
-    a = self * particle.mass
-    return a
-G.calculate = G_func
+G.calculate = lambda self, p: self*p.mass
 
 class Spring(Force):
+    active = []
+    reuse = []
     def __init__(self, x, y, z, strength=1):
         Force.__init__(self,0,0,0)
         self.center = Vector3(x, y, z)
@@ -34,12 +35,13 @@ class Spring(Force):
 class Particle(Periodic):
     _group = None
     collidables = []
+    container = None
     period = Periodic.period  # don't change, might lead to odd effects
     max_size = 128
     def __gc__(self):
         print('freeing',self)
 
-    def __init__(self,obj,velocity=None,mass=1,follow_direction=False,collision_sampling=1,size=10):
+    def __init__(self,obj,velocity=None,mass=1,follow_direction=False,collision_sampling=0,size=10):
         Periodic.__init__(self)
         self.velocity = velocity or Vector3(0, 0, 0)
         self.follow_direction = follow_direction
@@ -54,6 +56,9 @@ class Particle(Periodic):
         self.forces = []
         self.mass = mass
         self.dead = False
+        self.auto_collision_sampling = False
+        if collision_sampling < 1:
+            self.auto_collision_sampling = True
         self.collision_sampling = collision_sampling
         self.size = size
         if size > Particle.max_size:
@@ -87,7 +92,7 @@ class Particle(Periodic):
 
     def _collided(self, pos=None):
         if pos == None: pos = self.position
-        if Vector3.from_terrain(pos.x, pos.y, True).z > pos.z:
+        if Vector3.from_terrain(pos.x, pos.y, True).z > pos.z+0.1:
             return True
         if len(Particle.collidables) > 0:
             for cobj in Particle.collidables:
@@ -122,35 +127,55 @@ class Particle(Periodic):
         return tp
 
     def update(self):
+
         # append forces. Runs through their calculate functions, which can change their behaviour
+        r = (Particle.period / self.mass)
+        vel = self.velocity
         for force in self.forces:
             # make sure to remove inactive forces (for garbage collection)
             if not force.active:
                 self.forces.remove(force)
                 continue
             # apply the force to the velocity based on its calculated force vector on the particle.
-            self.velocity.add(force.calculate(self) * (Particle.period / self.mass))
+            f = force.calculate(self)
+            vel.x += f.x * r
+            vel.y += f.y * r
+            vel.z += f.z * r
         # do multisample collision
+        if self.auto_collision_sampling:
+            self.collision_sampling = math.floor(len(self.velocity)/300)+1
+            if self.collision_sampling > 1 and type(self) == Hero:
+                print(self.collision_sampling)
         r = Particle.period / self.collision_sampling
-        v = self.velocity * r
+        pos = self.position
+
         for i in range(self.collision_sampling):
-            self.position.add(v)
+            pos.x += vel.x * r
+            pos.y += vel.y * r
+            pos.z += vel.z * r
             # if the object doesn't have a terrainhit function, don't do the collision checking.
             if callable(self.on_terrainhit):
                 # check if the unit is 'in' the terrain or in a collisionobject
                 if self._collided():
                     # should probably implement the following better...
                     if self.collision_object != None and hasattr(self.collision_object,"velocity"):
-                        self.position.add(self.collision_object.velocity * r)
-                    self.position.subtract(v)
+                        cobj_vel = self.collision_object.velocity
+                        pos.x += cobj_vel.x * r
+                        pos.y += cobj_vel.y * r
+                        pos.z += cobj_vel.z * r
+                    pos.x -= vel.x * r
+                    pos.y -= vel.y * r
+                    pos.z -= vel.z * r
                     # get the normal from the function
                     n = self.collision_normal()
                     self.on_terrainhit(n)
                     if self.dead == False:
                         # certain weird things might cause a nan. Catch it and fix
                         self.velocity.fixnan()
-                        v = self.velocity * r  # could have changed during terrain collision!
-                        self.position.add(v)
+                        vel = self.velocity  # could have changed during terrain collision!
+                        pos.x += vel.x * r
+                        pos.y += vel.y * r
+                        pos.z += vel.z * r
                     else:
                         break
 
@@ -163,15 +188,17 @@ class Particle(Periodic):
                         if not IsUnitType(u, UNIT_TYPE_DEAD) and IsUnitInRangeXY(u, self.position.x,self.position.y,self.size):
                             z = BlzGetUnitZ(u)+GetUnitFlyHeight(u)
                             if self.position.z > (z - self.height) and self.position.z < (z+90):  # hardcoded unit height. Replace later!
-                                self.position.subtract(v)
+                                pos.x -= vel.x * r
+                                pos.y -= vel.y * r
+                                pos.z -= vel.z * r
                                 self.on_unithit(Unit.get(u) or Unit(u))
                                 if self.dead == False:
                                     # certain weird things might cause a nan. Catch it and fix
-                                    if self.velocity.x != self.velocity.x: self.velocity.x = 0
-                                    if self.velocity.y != self.velocity.y: self.velocity.y = 0
-                                    if self.velocity.z != self.velocity.z: self.velocity.z = 0
-                                    v = self.velocity * r  # could have changed during unit hit!
-                                    self.position.add(v)
+                                    self.velocity.fixnan()
+                                    vel = self.velocity  # could have changed during terrain collision!
+                                    pos.x += vel.x * r
+                                    pos.y += vel.y * r
+                                    pos.z += vel.z * r
                                 else:
                                     GroupClear(Particle._group)
                                     break
@@ -179,6 +206,16 @@ class Particle(Periodic):
                     u = FirstOfGroup(Particle._group)
         if self.dead == True:
             return None
+        # container
+        
+        if Particle.container and pos not in Particle.container:
+            c = Particle.container
+            if pos.x < c.minx: pos.x = c.minx
+            if pos.y < c.miny: pos.y = c.miny
+            if pos.z < c.minz: pos.z = c.minz
+            if pos.x > c.maxx: pos.x = c.maxx
+            if pos.y > c.maxy: pos.y = c.maxy
+            if pos.z > c.maxz: pos.z = c.maxz
         # handle timing
         self.time += Particle.period
         if isinstance(self.timeout,float):
@@ -196,7 +233,9 @@ class Particle(Periodic):
             if callable(self.obj.set_position):
                 self.obj.set_position(self.position.x, self.position.y, self.position.z)
             else:
-                self.obj.x, self.obj.y, self.obj.z = self.position.x, self.position.y, self.position.z
+                self.obj.x = self.position.x
+                self.obj.y = self.position.y
+                self.obj.z = self.position.z
 
     def on_period(self):
         if not self.dead:
