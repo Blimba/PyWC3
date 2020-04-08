@@ -62,12 +62,8 @@ from ..df.commonj import *
 from .compatibility import *
 
 
-
-
 class Event(Handle):
-    @staticmethod
-    def _triggered():
-        self = Handle.get(GetTriggeringTrigger())
+    def _execute_event(self):
         try:
             if self.args != None:
                 self.callback(*self.args)
@@ -75,31 +71,44 @@ class Event(Handle):
                 self.callback()
         except:
             print(Error)
+    @staticmethod
+    def _triggered():
+        self = Handle.get(GetTriggeringTrigger())
+        if self.active:
+            self._execute_event()
 
     def __init__(self,callback,*args):
         Handle.__init__(self,CreateTrigger())
         TriggerAddAction(self._handle, Event._triggered)
         self.callback = callback
         self.args = args
+        self.active = True
 
     def register(self,func,*args):
         func(self._handle,*args)
 
 class ClassEvent(Handle):
-    @staticmethod
-    def _triggered():
-        self = Handle.get(GetTriggeringTrigger())
+    def _execute_event(self):
         nargs = []
         for arg in self.args:
             if callable(arg):
-                try: nargs.append(arg())
-                except: nargs.append(arg)
+                try:
+                    nargs.append(arg())
+                except:
+                    nargs.append(arg)
         obj = self.getter
-        try:  obj = self.getter()
-        except: pass
-        if hasattr(obj,self.callbackname):
-            try: getattr(obj,self.callbackname)(obj,*nargs)
+        try:
+            obj = self.getter()
+        except:
+            pass
+        if hasattr(obj, self.callbackname):
+            try: getattr(obj, self.callbackname)(obj, *nargs)
             except: print(Error)
+    @staticmethod
+    def _triggered():
+        self = Handle.get(GetTriggeringTrigger())
+        if self.active:
+            self._execute_event()
 
 
     def __init__(self,methodname,getter,*args):
@@ -108,6 +117,7 @@ class ClassEvent(Handle):
         self.args = args
         self.getter = getter
         self.callbackname = methodname
+        self.active = True
 
     def register(self,func,*args):
         func(self._handle,*args)
