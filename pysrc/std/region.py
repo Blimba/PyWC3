@@ -70,6 +70,7 @@ class Region(Handle):
         self.outer_rects = []
         self.hysteresis = math.floor(hysteresis / 32) * 32
         self.default_enter = True
+        self.active = True
         Region._event_enter.add_region(self.inner)
         Region._event_leave.add_region(self.outer)
 
@@ -97,12 +98,12 @@ class Region(Handle):
         pass
 
     def _on_enter_check(self,unit):
-        if not unit in self.units:
+        if self.active and not unit in self.units:
             if self.on_enter(unit):
                 self.units.append(unit)
 
     def _on_exit_check(self,unit):
-        if unit in self.units:
+        if self.active and unit in self.units:
             self.on_exit(unit)
             self.units.remove(unit)
 

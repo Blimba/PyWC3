@@ -3,7 +3,9 @@ from .commonj import *
 from .blizzardj import *
 from .commonai import *
 gg_cam_Camera_001 = CreateCameraSetup()
+gg_snd_UndeadGlueScreenLoop1 = CreateSound("Sound/Ambient/UndeadGlueScreenLoop1.flac", true, false, false, 0, 0, "DefaultEAXON")
 gg_trg_Melee_Initialization = CreateTrigger()
+gg_snd_Wetlandsday = CreateSound("Sound/Ambient/SunkenRuins/Wetlandsday.flac", false, false, false, 0, 0, "DefaultEAXON")
 
 # Below are the preplaced doodads
 

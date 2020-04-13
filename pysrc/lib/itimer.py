@@ -30,13 +30,14 @@ class CTimer():
     def timer(self,time,callback,*args):
         t = None
         if len(ITimer.recycle) > 0:
-            t = ITimer.recycle.pop(0)
+            t = ITimer.recycle.pop()
         else:
             t = Timer()
         t._instance = self
         t._callback = callback
         t._args = args
         t.start(time, CTimer._timeout)
+        return t
 
 class ITimer():
     recycle = []
@@ -51,7 +52,7 @@ class ITimer():
     def start(time,callback,*args):
         t = None
         if len(ITimer.recycle) > 0:
-            t = ITimer.recycle.pop(0)
+            t = ITimer.recycle.pop()
         else:
             t = Timer()
         t._callback = callback

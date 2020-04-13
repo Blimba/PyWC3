@@ -92,8 +92,6 @@ class Camera(Periodic):
         )
         return self
     def pan_field(self,field,value,duration,method='smooth'):
-        if field == CAMERA_FIELD_FIELD_OF_VIEW:
-            print(GetCameraField(field))
         if method == 'instant' or duration <= Periodic.period:
             self.transitions[field].destroy()
             self.pan_field_instant(field,value)

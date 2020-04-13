@@ -110,6 +110,9 @@ class Vector2:
         self.x = self.x*cos - self.y*sin
         self.y = self.x*sin + self.y*cos
 
+    def show(self):
+        fx = AddSpecialEffect(r"Abilities\\Spells\\Orc\\Bloodlust\\BloodlustTarget.mdl",self.x,self.y)
+        return self
 class Line2:
     def __init__(self,p1,p2):
         self.p1 = p1
@@ -131,6 +134,12 @@ class Line2:
 
     def normal(self,p):
         return self.closest_point(p).subtract(p).normalize()
+
+    def show(self):
+        z1 = GetLocationZ(Location(self.p1.x,self.p1.y))
+        z2 = GetLocationZ(Location(self.p2.x, self.p2.y))
+        AddLightningEx("DRAL",False,self.p1.x,self.p1.y,z1,self.p2.x,self.p2.y,z2)
+        return self
 
 class Rectangle:
     def __init__(self,minx,miny,maxx,maxy):

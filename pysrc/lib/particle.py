@@ -175,7 +175,7 @@ class Particle(Periodic):
                         pos.y += vel.y * r
                         pos.z += vel.z * r
                     else:
-                        break
+                        return None
 
             if callable(self.on_unithit) and self.dead == False:
                 GroupEnumUnitsInRange(Particle._group, self.position.x, self.position.y, self.size+Particle.max_size, None)
@@ -199,13 +199,12 @@ class Particle(Periodic):
                                     pos.z += vel.z * r
                                 else:
                                     GroupClear(Particle._group)
-                                    break
+                                    return None
                     GroupRemoveUnit(Particle._group, u)
                     u = FirstOfGroup(Particle._group)
         if self.dead == True:
             return None
-        # container
-        
+        # container for map bounds safety as well as to prevent units from going where they should not
         if Particle.container and pos not in Particle.container:
             c = Particle.container
             if pos.x < c.minx: pos.x = c.minx
@@ -220,6 +219,7 @@ class Particle(Periodic):
             if self.time >= self.timeout:
                 if callable(self.on_timeout):
                     self.on_timeout()
+                    self.time = 0.0
                 else:
                     self.destroy()
 

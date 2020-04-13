@@ -13,8 +13,8 @@ from event import *
 
 """
 class UnitRangeEvent(ClassEvent):
-    def __init__(self, unit, range, methodname, getter, *args):
-        ClassEvent.__init__(self, methodname, getter, *args)
+    def __init__(self, unit, range, methodname, *args):
+        ClassEvent.__init__(self, methodname, unit, *args)
         self.register(TriggerRegisterUnitInRange,unit._handle,range)
 
 class PlayerUnitEvent(ClassEvent):
@@ -353,6 +353,7 @@ class Unit(Handle):
     @staticmethod
     def _make_events():
         Unit.events.append(PlayerUnitEvent(EVENT_PLAYER_UNIT_DEATH, "on_death", Unit.get_dying))
+        Unit.events.append(PlayerUnitEvent(EVENT_PLAYER_UNIT_ATTACKED, "on_attack", Unit.get_attacker, Unit.get_trigger))
         Unit.events.append(PlayerUnitEvent(EVENT_PLAYER_UNIT_ATTACKED, "on_attacked", Unit.get_trigger, Unit.get_attacker))
         Unit.events.append(PlayerUnitEvent(EVENT_PLAYER_UNIT_DAMAGED, "on_damaged", Unit.get_trigger, Unit.get_damage_source))
         Unit.events.append(PlayerUnitEvent(EVENT_PLAYER_UNIT_DAMAGING, "on_damaging", Unit.get_damage_source, Unit.get_trigger))
@@ -762,4 +763,4 @@ class Unit(Handle):
     def skin(self, skinId):
         BlzSetUnitSkin(self._handle, skinId)
 
-AddScriptHook(Unit._make_events, MAIN_BEFORE)
+AddScriptHook(Unit._make_events, MAIN_AFTER)

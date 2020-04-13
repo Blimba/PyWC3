@@ -18,16 +18,46 @@ def FourCC(str):
 
 Error=""  # this is the Error message to use in try/except blocks
 class math:
-    def random(self):
+    @staticmethod
+    def random():
         return 0.0
-    def floor(self,a):
+
+    @staticmethod
+    def floor(a):
         return a
-    def ceil(self,a):
+
+    @staticmethod
+    def ceil(a):
         return a
-    def min(self,*args):
+
+    @staticmethod
+    def min(*args):
         return 0
-    def max(self,*args):
+
+    @staticmethod
+    def max(*args):
         return 0
+
+    @staticmethod
+    def sin(x): return 0
+
+    @staticmethod
+    def cos(x): return 0
+
+    @staticmethod
+    def tan(x): return 0
+
+    @staticmethod
+    def atan(x,y=0): return 0
+
+    @staticmethod
+    def acos(x): return 0
+
+    @staticmethod
+    def asin(x): return 0
+
+    @staticmethod
+    def sqrt(x): return 0
 
 class coroutine:
     @staticmethod
