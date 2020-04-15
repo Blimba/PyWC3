@@ -131,8 +131,12 @@ class Map:
         content = re.sub("^from (.+) import (.+)*", "", content, flags=re.MULTILINE)
 
         # preprocess
-        if re.match("^\s*#\s*RunPy=([\S]+?)\s*$",content,flags=re.MULTILINE):
-            for fn in re.findall("^\s*#\s*RunPy=([\S]+?)\s*$", content, flags=re.MULTILINE):
+
+        pattern = r"^(\s*)#\s*RunPy=([\S]+?)\s*$"
+        if re.search(pattern,content,flags=re.MULTILINE):
+            for m in re.findall(pattern, content, flags=re.MULTILINE):
+                fn = m[1]
+                sp = m[0]
                 if fn.split('.')[-1] == "py":
                     fn = fn.split('.')[0].replace("\\",".")
                     if freeze_preproc:
@@ -141,11 +145,17 @@ class Map:
                         print('> Preprocessing {}.py'.format(fn))
                     try: imp = importlib.import_module(fn)
                     except ModuleNotFoundError: raise SystemError('Module {} not found!'.format(fn))
-                    imp.main(self)
-            if freeze_preproc:
-                rc = re.sub(r"^\s*#\s*RunPy=([\S]+?)\s*$",r"# frozen[RunPy=\1]",rc, flags=re.MULTILINE)
-                with open(file,"w") as f:
-                    f.write(rc)
+                    ret = imp.main(self)
+                    if isinstance(ret,str):
+                        ret = ret.replace('\n','\n'+sp)
+                        ret = '\n'+sp+ret
+                        content = re.sub(pattern,ret,content,count=1,flags=re.MULTILINE)
+                    else:
+                        ret = ""
+                    if freeze_preproc:
+                        rc = re.sub(pattern,r"\1# frozen[RunPy=\2]"+ret,rc,count=1,flags=re.MULTILINE)
+                        with open(file,"w") as f:
+                            f.write(rc)
         if freeze_preproc: return ""
         # object editing
         for fn in re.findall("^\s*#ObjEditor=([\S]+?)\s*$", content, flags=re.MULTILINE):
