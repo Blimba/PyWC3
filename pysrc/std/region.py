@@ -74,6 +74,10 @@ class Region(Handle):
         Region._event_enter.add_region(self.inner)
         Region._event_leave.add_region(self.outer)
 
+    def destroy(self):
+        Handle.destroy(self)
+        self.active = False
+
     def __contains__(self, unit):
         return unit in self.units
 
@@ -96,16 +100,24 @@ class Region(Handle):
         return self.default_enter
     def on_exit(self, unit):
         pass
+    def on_first_enter(self,unit):
+        pass
+    def on_last_exit(self,unit):
+        pass
 
     def _on_enter_check(self,unit):
         if self.active and not unit in self.units:
             if self.on_enter(unit):
                 self.units.append(unit)
+                if len(self.units) == 1:
+                    self.on_first_enter(unit)
 
     def _on_exit_check(self,unit):
         if self.active and unit in self.units:
             self.on_exit(unit)
             self.units.remove(unit)
+            if len(self.units) == 0:
+                self.on_last_exit(unit)
 
     def enter(self,unit):
         if unit not in self.units:
