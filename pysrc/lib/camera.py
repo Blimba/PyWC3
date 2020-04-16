@@ -25,13 +25,19 @@ class Camera(Periodic):
             self.players = [players]
         self.transitions = {}
         self.velocities = {}
+        z = 0
         for player in self.players:
             if player in Camera._players:
-                Camera._players[player].destroy()
+                Camera._players[player].players.remove(player)
+                if GetLocalPlayer() == Player(player):
+                    z = Camera._players[player].z
+                if len(Camera._players[player].players) == 0:
+                    Camera._players[player].destroy()
             Camera._players[player] = self
         self.lock_z = True
         self.shake_amount = 0.0
         self.shake_dim = 0.0
+        self.z = z
 
     @staticmethod
     def sync_eye_position(playerid, callback, *args):
@@ -47,7 +53,7 @@ class Camera(Periodic):
         Periodic.destroy(self)
 
     def on_period(self):
-        z = 0
+        z = self.z
         if self.shake_amount > 0:
             z += (math.random() - 0.5) * self.shake_amount
             self.shake_amount *= self.shake_dim
