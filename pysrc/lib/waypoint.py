@@ -30,27 +30,33 @@ class WaypointParticle(Particle):
         self.t = Timer()
         self.t.data = self
         self.t.start(0.0, WaypointParticle._timeout)
+        self.first = None
 
     def add_waypoint(self,wp):
         if self.waypoint == None:
+            self.first = wp
             self.waypoint = wp
         else:
-            self.waypoint.next = wp
+            self.waypoint.prev = wp
         return self
 
     def add_waypoints(self,*wps):
         for wp in wps:
             if self.waypoint == None:
+                self.first = wp
                 self.waypoint = wp
             else:
-                self.waypoint.next = wp
+                self.waypoint.prev = wp
         return self
 
     @staticmethod
     def _timeout():
         self = Timer.get_expired().data
         self.waypoint = self.waypoint.next
-        self.go_to()
+        if self.first == self.waypoint:
+            self.on_destination_reached()
+        else:
+            self.go_to()
 
     def go_to(self,wp=None):
         if wp == None: wp = self.waypoint
@@ -59,7 +65,8 @@ class WaypointParticle(Particle):
         dv = dv/time
         self.update_velocity(dv.x,dv.y,dv.z)
         self.t.start(time,WaypointParticle._timeout)
-
+    def on_destination_reached(self):
+        self.go_to()  # circular movement is standard.
 
     def destroy(self,hard=False):
         self.t.destroy()
@@ -81,35 +88,43 @@ class WaypointUnit(Unit,Cyclist):
         Unit.__init__(self,playerid,unitid,x,y,face,skinid)
         Cyclist.__init__(self)
         self.waypoint = None
+        self.first = None
+        self.active = True
         if WaypointUnit._start == None:
             WaypointUnit._start = self
 
     def add_waypoint(self,wp):
         if self.waypoint == None:
+            self.first = wp
             self.waypoint = wp
         else:
-            self.waypoint.next = wp
+            self.waypoint.prev = wp
         return self
 
     def add_waypoints(self,*wps):
         for wp in wps:
             if self.waypoint == None:
+                self.first = wp
                 self.waypoint = wp
             else:
-                self.waypoint.next = wp
+                self.waypoint.prev = wp
         return self
 
     def go_to(self,wp=None):
         if wp == None: wp = self.waypoint
         self.order("move",wp.x,wp.y)
-
+    def on_destination_reached(self):
+        self.go_to()
     def check(self):
-        if self.waypoint != None:
+        if self.waypoint != None and self.active:
             if self.current_order == OrderId("idle"):
                 self.go_to()
             if self.waypoint.reached(self):
                 self.waypoint = self.waypoint.next
-                self.go_to()
+                if self.waypoint == self.first:
+                    self.on_destination_reached()
+                else:
+                    self.go_to()
 
     def destroy(self,hard=False):
         if (WaypointUnit._start == self):
