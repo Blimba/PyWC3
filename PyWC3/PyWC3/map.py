@@ -138,13 +138,13 @@ class Map:
                 fn = m[1]
                 sp = m[0]
                 if fn.split('.')[-1] == "py":
-                    fn = fn.split('.')[0].replace("\\",".")
+                    fn = fn.split('.')[0].replace("\\",".").replace("/",".")
                     if freeze_preproc:
                         print('> Freezing preprocess {}.py'.format(fn))
                     else:
                         print('> Preprocessing {}.py'.format(fn))
                     try: imp = importlib.import_module(fn)
-                    except ModuleNotFoundError: raise SystemError('Module {} not found!'.format(fn))
+                    except ModuleNotFoundError: raise SystemError('Module {} not found in {}!'.format(fn,os.getcwd()))
                     ret = imp.main(self)
                     if isinstance(ret,str):
                         ret = ret.replace('\n','\n'+sp)
