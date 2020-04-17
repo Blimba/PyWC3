@@ -1,15 +1,15 @@
 from std.index import *
-# from df.test import *
-from std.player import *
-from lib.particle import *
-from lib.itimer import ITimer
-from std.effect import Effect
-def chat(p,msg):
-    if msg[:5] == "-lua ":
-        cmd = msg[5:]
-        """[[luacode]]
-        xpcall(function() load(cmd)() end, function(Error) print(Error) end)
-        """
+# # from df.test import *
+# from std.player import *
+# from lib.particle import *
+# from lib.itimer import ITimer
+# from std.effect import Effect
+# def chat(p,msg):
+#     if msg[:5] == "-lua ":
+#         cmd = msg[5:]
+#         """[[luacode]]
+#         xpcall(function() load(cmd)() end, function(Error) print(Error) end)
+#         """
 
 # class p(Particle):
 #     def __init__(self):
@@ -26,24 +26,19 @@ def chat(p,msg):
 #     p()
 #     # print(Vector3.stats(Vector3),Periodic.num)
 #     ITimer.start(0.015,timeout)
-from lib.camera import *
-from lib.click_plane import *
-from std.unit import Unit
-from lib.scene import *
-def HauntedMansion():
-    # Game.start()
-    Player.on_chat = chat
-    # for i in range(10):
-    #     a = i/10*bj_PI*2
-    #     PhysicsUnit(0,b'hfoo',math.cos(a)*256,math.sin(a)*256)
-    # timeout()
-    def _a(scene):
-        c = Camera().pan_to(1024,1024,5.0)
-        scene.wait(3)
-        c.pan_to(0, 0, 5.0)
-    Scene(_a).start()
+# from lib.camera import *
+# from lib.click_plane import *
+# from std.unit import Unit
+# from lib.scene import *
 
-AddScriptHook(HauntedMansion, MAP_LOAD)
+def test():
+    print('ha1')
+    # RunPy=preproc.py
+    # RunPy=preproc.py
+    # RunPy=preproc.py
+    print('ha2')
+
+AddScriptHook(test, MAP_LOAD)
 
 
 

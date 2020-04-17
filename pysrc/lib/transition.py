@@ -4,6 +4,19 @@ from .periodic import *
 
 
 class _EASE_LINEAR:
+    _bin = {}
+    def __new__(cls, *args):
+        if cls in _EASE_LINEAR._bin and len(_EASE_LINEAR._bin[cls]) > 0:
+            return _EASE_LINEAR._bin[cls].pop()
+        else:
+            return object.__new__(cls)
+
+    def destroy(self):
+        if type(self) in _EASE_LINEAR._bin:
+            _EASE_LINEAR._bin[type(self)].append(self)
+        else:
+            _EASE_LINEAR._bin[type(self)] = [self]
+
     def __init__(self, duration, start, stop):
         self.t_tot = duration
         self.start = start
@@ -22,6 +35,8 @@ class _EASE_LINEAR:
             t = self.t_tot
             self.status = 0
         return self.calculate(t)
+
+
 class _EASE_LINEAR_RAD(_EASE_LINEAR):
     def __init__(self, duration, start, stop):
         _EASE_LINEAR.__init__(self,duration,start,stop)
@@ -142,6 +157,19 @@ class _EASE_SM_A_RAD(_EASE_LINEAR):
         return self.start + self.v0 * t + 0.5 * self.a * t * t + self.A * t * t * t / 3
 
 class Transition(Periodic):
+    _bin = {}
+    def __new__(cls, *args):
+        if cls in Transition._bin and len(Transition._bin[cls]) > 0:
+            return Transition._bin[cls].pop()
+        else:
+            return object.__new__(cls)
+
+    def free(self):
+        if type(self) in Transition._bin:
+            Transition._bin[type(self)].append(self)
+        else:
+            Transition._bin[type(self)] = [self]
+
     @staticmethod
     def Smooth_Acceleration_Angular(duration, start, stop, v0=0.0, v_end=0.0):
         return _EASE_SM_A_RAD(duration, start, stop, v0, v_end)
@@ -219,4 +247,8 @@ class Transition(Periodic):
 
     def destroy(self):
         self.active = False
+        for i,arg in enumerate(self.args):
+            if type(arg) in Transition._methods:
+                arg.destroy()
         Periodic.destroy(self)
+        self.free()
