@@ -4,12 +4,12 @@ from ..std.index import *
 
 class Vector3:
     active = []
-    reuse = []
-    _fifo_buffer_size = 100  # this is the amount of temporary vectors used, don't increase it too much: it will severely affect performance
+    _fifo_buffer_size = 50  # this is the amount of temporary vectors used, don't increase it too much: it will severely affect performance
     _loc = None
+    _bin = {}
     def __new__(cls,x=0.0,y=0.0,z=0.0,temp=False):
-        if len(Vector3.reuse) > Vector3._fifo_buffer_size:
-            o = cls.reuse.pop(0)
+        if cls in Vector3._bin and len(Vector3._bin[cls]) > cls._fifo_buffer_size:
+            o = Vector3._bin[cls].pop(0)
             cls.active.append(o)
             return o
         else:
@@ -21,13 +21,16 @@ class Vector3:
         cls = type(self)
         if self not in cls.active:
             cls.active.append(self)
-            cls.reuse.remove(self)
+            Vector3._bin[cls].remove(self)
         return self
     def destroy(self):
         cls = type(self)
-        if self not in cls.reuse:
-            cls.active.remove(self)
-            cls.reuse.append(self)
+        if cls in Vector3._bin:
+            if self not in Vector3._bin[cls]:
+                cls.active.remove(self)
+                Vector3._bin[cls].append(self)
+        else:
+            Vector3._bin[cls] = [self]
     def fixnan(self):
         if self.x != self.x: self.x = 0.0
         if self.y != self.y: self.y = 0.0
@@ -36,7 +39,10 @@ class Vector3:
 
     @staticmethod
     def stats():
-        return 'In use: {}, Recycle bin: {}'.format(str(len(Vector3.active)), str(len(Vector3.reuse)))
+        c = 0
+        for cls in Vector3._bin:
+            c += len(Vector3._bin[cls])
+        return 'In use: {}, Recycle bin: {}'.format(str(len(Vector3.active)), str(c))
 
     def __init__(self,x=0.0,y=0.0,z=0.0,temp=False):
         self.x = x
