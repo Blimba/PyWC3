@@ -9,12 +9,18 @@ from ..lib.sync import NumberSync
 class Camera(Periodic):
     norm_fields = [CAMERA_FIELD_TARGET_DISTANCE, CAMERA_FIELD_FARZ]
     ang_fields = [CAMERA_FIELD_ANGLE_OF_ATTACK, CAMERA_FIELD_ROTATION,CAMERA_FIELD_FIELD_OF_VIEW]
-    _players = {}
+    _from_players = {}
     @staticmethod
     def from_player(i):
-        if i in Camera._players:
-            return Camera._players[i]
+        if i in Camera._from_players:
+            return Camera._from_players[i]
         return Camera(i)
+    @staticmethod
+    def stats():
+        for i in Camera._from_players:
+            print('Player',i,'Camera ', Camera._from_players[i].id, 'Players:',Camera._from_players[i].players,'z',Camera._from_players[i].z)
+
+    id = 0
     def __init__(self,players=None):
         if players == None:
             players = [i for i in range(bj_MAX_PLAYERS)]
@@ -25,15 +31,17 @@ class Camera(Periodic):
             self.players = [players]
         self.transitions = {}
         self.velocities = {}
+        self.id = Camera.id
+        Camera.id += 1
         z = 0
         for player in self.players:
-            if player in Camera._players:
-                Camera._players[player].players.remove(player)
+            if player in Camera._from_players:
+                Camera._from_players[player].players.remove(player)
                 if GetLocalPlayer() == Player(player):
-                    z = Camera._players[player].z
-                if len(Camera._players[player].players) == 0:
-                    Camera._players[player].destroy()
-            Camera._players[player] = self
+                    z = Camera._from_players[player].z
+                if len(Camera._from_players[player].players) == 0:
+                    Camera._from_players[player].destroy()
+            Camera._from_players[player] = self
         self.lock_z = True
         self.shake_amount = 0.0
         self.shake_dim = 0.0
@@ -58,7 +66,7 @@ class Camera(Periodic):
             z += (math.random() - 0.5) * self.shake_amount
             self.shake_amount *= self.shake_dim
             if self.shake_amount < 10: self.shake_amount = 0
-        if GetPlayerId(GetLocalPlayer()) in self._players and self.lock_z:
+        if GetPlayerId(GetLocalPlayer()) in self.players and self.lock_z:
             if 'z' not in self.transitions or not self.transitions['z'].active:
                 z += GetCameraField(CAMERA_FIELD_ZOFFSET) - GetCameraTargetPositionZ()
                 SetCameraField(CAMERA_FIELD_ZOFFSET, z, - 0.01)
@@ -73,14 +81,14 @@ class Camera(Periodic):
             z += (math.random() - 0.5) * self.shake_amount
             self.shake_amount *= self.shake_dim
             if self.shake_amount < 10: self.shake_amount = 0
-        if GetPlayerId(GetLocalPlayer()) in self._players:
+        if GetPlayerId(GetLocalPlayer()) in self.players:
             SetCameraField(CAMERA_FIELD_ZOFFSET, z, - 0.01)
             SetCameraField(CAMERA_FIELD_ZOFFSET, z, 0.01)
     def pan_to_instant(self,x,y):
-        if GetPlayerId(GetLocalPlayer()) in self._players:
+        if GetPlayerId(GetLocalPlayer()) in self.players:
             PanCameraToTimed(x,y,Periodic.period)
     def pan_field_instant(self,field,value):
-        if GetPlayerId(GetLocalPlayer()) in self._players:
+        if GetPlayerId(GetLocalPlayer()) in self.players:
             SetCameraField(field,value,Periodic.period)
     def pan_z(self,value,duration,method='smooth'):
         if method == 'instant' or duration <= Periodic.period:
