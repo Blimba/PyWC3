@@ -5,8 +5,6 @@ from .periodic import *
 from ..std.timer import *
 from ..std.unit import *
 class Force(Vector3):
-    active = []
-    reuse = []
     def __init__(self, x, y, z):
         self.active = True
         Vector3.__init__(self, x, y, z)
@@ -23,8 +21,6 @@ G = Force(0,0,-2000)
 G.calculate = lambda self, p: self*p.mass
 
 class Spring(Force):
-    active = []
-    reuse = []
     def __init__(self, x, y, z, strength=1):
         Force.__init__(self,0,0,0)
         self.center = Vector3(x, y, z)
@@ -38,8 +34,18 @@ class Particle(Periodic):
     container = None
     period = Periodic.period  # don't change, might lead to odd effects
     max_size = 128
-    def __gc__(self):
-        print('freeing',self)
+    _bin = {}
+    def __new__(cls,obj,velocity=None,mass=1,follow_direction=False,collision_sampling=0,size=10):
+        if cls in Particle._bin and len(Particle._bin[cls]) > 0:
+            return Particle._bin[cls].pop()
+        else:
+            return object.__new__(cls)
+
+    def free(self):
+        if type(self) in Particle._bin:
+            Particle._bin[type(self)].append(self)
+        else:
+            Particle._bin[type(self)] = [self]
 
     def __init__(self,obj,velocity=None,mass=1,follow_direction=False,collision_sampling=0,size=10):
         Periodic.__init__(self)
@@ -79,6 +85,7 @@ class Particle(Periodic):
         if self.obj != None and self.obj != self:
             self.obj.destroy()
             self.obj = None
+        self.free()
 
     def update_velocity(self,x,y,z):
         self.velocity.x = x
@@ -143,7 +150,7 @@ class Particle(Periodic):
             vel.z += f.z * r
         # do multisample collision
         if self.auto_collision_sampling:
-            self.collision_sampling = math.floor(len(self.velocity)/300)+1
+            self.collision_sampling = math.floor(len(self.velocity)/(3/Particle.period))+1
         r = Particle.period / self.collision_sampling
         pos = self.position
 
