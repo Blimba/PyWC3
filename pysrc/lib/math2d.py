@@ -3,28 +3,34 @@ from ..df.commonj import *
 
 class Vector2:
     active = []
-    reuse = []
-    _fifo_buffer_size = 100  # this is the amount of temporary vectors used
+    _fifo_buffer_size = 50  # this is the amount of temporary vectors used
     _loc = None
+
+    _bin = {}
     def __new__(cls,x=0.0,y=0.0,temp=False):
-        if len(Vector2.reuse) > Vector2._fifo_buffer_size:
-            o = Vector2.reuse.pop(0)
-            Vector2.active.append(o)
+        if cls in Vector2._bin and len(Vector2._bin[cls]) > cls._fifo_buffer_size:
+            o = Vector2._bin[cls].pop(0)
+            cls.active.append(o)
             return o
         else:
             o = object.__new__(cls)
-            Vector2.active.append(o)
+            cls.active.append(o)
             return o
 
     def permanent(self):
-        if self not in Vector2.active:
-            Vector2.active.append(self)
-            Vector2.reuse.remove(self)
+        cls = type(self)
+        if self not in cls.active:
+            cls.active.append(self)
+            Vector2._bin[cls].remove(self)
         return self
     def destroy(self):
-        if self not in Vector2.reuse:
-            Vector2.active.remove(self)
-            Vector2.reuse.append(self)
+        cls = type(self)
+        if cls in Vector2._bin:
+            if self not in Vector2._bin[cls]:
+                cls.active.remove(self)
+                Vector2._bin[cls].append(self)
+        else:
+            Vector2._bin[cls] = [self]
 
     def __init__(self,x=0.0,y=0.0,temp=False):
         self.x = x
