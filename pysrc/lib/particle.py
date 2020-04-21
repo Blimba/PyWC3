@@ -74,12 +74,14 @@ class Particle(Periodic):
         self.on_terrainhit = None
         self.on_timeout = None
         self.height = 0
+        self.terrain_velocity = Vector3(0,0,0)
 
     def destroy(self):
         self.dead = True
         Periodic.destroy(self)
         self.position.destroy()
         self.velocity.destroy()
+        self.terrain_velocity.destroy()
         self.position = None
         self.velocity = None
         if self.obj != None and self.obj != self:
@@ -96,10 +98,14 @@ class Particle(Periodic):
         self.position.x = x
         self.position.y = y
         self.position.z = z
+        if self.obj != None:
+            self.obj.set_position(x,y,z)
 
     def _collided(self, pos=None):
         if pos == None: pos = self.position
-        if Vector3.from_terrain(pos.x, pos.y, True).z > pos.z+0.1:
+        self.collision_object = None
+        self._tp = Vector3.from_terrain(pos.x, pos.y, True)
+        if self._tp.z > pos.z+0.1:
             return True
         if len(Particle.collidables) > 0:
             for cobj in Particle.collidables:
@@ -108,15 +114,26 @@ class Particle(Periodic):
                     return True
         return False
 
+    def set_collision_normal(self,v):
+        self._cn = v
+
     def collision_normal(self,pos=None):
-        if pos == None: pos = self.position
+        if pos == None:
+            pos = self.position
         if self.collision_object:
             return self.collision_object.normal(pos)
+        if pos == self.position and self._cn != None:
+            return self._cn
         return Vector3.terrain_normal(pos.x, pos.y)
 
     def terrain_point(self,pos=None):
-        if pos == None: pos = self.position
-        tp = Vector3.from_terrain(pos.x,pos.y, True)
+        tp = None
+        if pos == None:
+            pos = self.position
+            if self._tp != None:
+                tp = self._tp
+        if tp == None:
+            tp = Vector3.from_terrain(pos.x,pos.y, True)
         o = None
         if len(Particle.collidables) > 0:
             for cobj in Particle.collidables:
@@ -134,7 +151,6 @@ class Particle(Periodic):
         return tp
 
     def update(self):
-
         # append forces. Runs through their calculate functions, which can change their behaviour
         r = (Particle.period / self.mass)
         vel = self.velocity
@@ -153,7 +169,6 @@ class Particle(Periodic):
             self.collision_sampling = math.floor(len(self.velocity)/(3/Particle.period))+1
         r = Particle.period / self.collision_sampling
         pos = self.position
-
         for i in range(self.collision_sampling):
             pos.x += vel.x * r
             pos.y += vel.y * r
@@ -162,12 +177,6 @@ class Particle(Periodic):
             if callable(self.on_terrainhit):
                 # check if the unit is 'in' the terrain or in a collisionobject
                 if self._collided():
-                    # should probably implement the following better...
-                    if self.collision_object != None and hasattr(self.collision_object,"velocity"):
-                        cobj_vel = self.collision_object.velocity
-                        pos.x += cobj_vel.x * r
-                        pos.y += cobj_vel.y * r
-                        pos.z += cobj_vel.z * r
                     pos.x -= vel.x * r
                     pos.y -= vel.y * r
                     pos.z -= vel.z * r
@@ -244,6 +253,8 @@ class Particle(Periodic):
 
     def on_period(self):
         if not self.dead:
+            self._tp = None
+            self._cn = None
             self.update()
             self.update_graphics()
 
