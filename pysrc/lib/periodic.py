@@ -25,7 +25,15 @@ class Periodic(Cyclist):
         Cyclist.exclude(self)
         if self == Periodic._first:
             Periodic._first = None
-
+    @staticmethod
+    def stats():
+        lst = []
+        node = Periodic._first
+        while node != None:
+            lst.append(node)
+            node = node.next
+            if node == Periodic._first or Periodic._first == None: break
+        print(lst)
     @staticmethod
     def _period():
         node = Periodic._first
@@ -70,6 +78,16 @@ class SlowPeriodic(Cyclist):
         Cyclist.exclude(self)
         if self == SlowPeriodic._first:
             SlowPeriodic._first = None
+
+    @staticmethod
+    def stats():
+        lst = []
+        node = SlowPeriodic._first
+        while node != None:
+            lst.append(node)
+            node = node.next
+            if node == SlowPeriodic._first or SlowPeriodic._first == None: break
+        print(lst)
 
     @staticmethod
     def _period():
