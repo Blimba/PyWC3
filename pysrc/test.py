@@ -1,44 +1,34 @@
 from std.index import *
-# # from df.test import *
-# from std.player import *
-# from lib.particle import *
-# from lib.itimer import ITimer
-# from std.effect import Effect
-# def chat(p,msg):
-#     if msg[:5] == "-lua ":
-#         cmd = msg[5:]
-#         """[[luacode]]
-#         xpcall(function() load(cmd)() end, function(Error) print(Error) end)
-#         """
+from lib.terrainz_grid import *
+from df.blizzardj import bj_mapInitialPlayableArea
+from lib.unitphysics import PhysicsUnit
+from lib.particle import Spring
+from lib.periodic import Periodic
+from std.player import Player
+from df.test import *
+from HauntedMansion.classes.objects import Platform, MovingPlatform
+def chat(p,msg):
+    if msg[0] == '!':
+        cmd = msg[1:]
+        """[[luacode]]
+        xpcall(function() load(cmd)() end, function(Error) print(Error) end)
+        """
 
-# class p(Particle):
-#     def __init__(self):
-#         Particle.__init__(
-#             self,
-#             Effect(0,0,0,r"Abilities\\Weapons\\AncientProtectorMissile\\AncientProtectorMissile.mdl"),
-#             Vector3(math.random()*256-128,math.random()*256-128,1500)
-#         )
-#         self.forces.append(G)
-#         self.timeout = 2.0
-#     def on_terrainhit(self,normal):
-#         self.velocity.update_vector(self.velocity.reflect(normal))
-# def timeout():
-#     p()
-#     # print(Vector3.stats(Vector3),Periodic.num)
-#     ITimer.start(0.015,timeout)
-# from lib.camera import *
-# from lib.click_plane import *
-# from std.unit import Unit
-# from lib.scene import *
+# def Timeit():
+#     t = os.clock()
+#     for _ in range(1000):
+#         u.update()
+#     print((os.clock()-t)*1000,'ms')
 
+u=None
 def test():
-    print('ha1')
-    # RunPy=preproc.py
-    # RunPy=preproc.py
-    # RunPy=preproc.py
-    print('ha2')
+    Player.on_chat = chat
+    u = PhysicsUnit(0,b'hfoo',0,0)
+    u.terrain_velocity.update(100,0,0)
+    Platform(512,0,100)
+    mp = MovingPlatform(640, 128, 100)
+    mp.forces.append(Spring(640,0,100,1))
 
-AddScriptHook(test, MAP_LOAD)
 
-
+AddScriptHook(test,MAP_LOAD)
 

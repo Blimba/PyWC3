@@ -1,7 +1,8 @@
+gg_rct_grid = nil
 gg_cam_Camera_001 = nil
 gg_snd_UndeadGlueScreenLoop1 = nil
-gg_trg_Melee_Initialization = nil
 gg_snd_Wetlandsday = nil
+gg_trg_Melee_Initialization = nil
 function InitGlobals()
 end
 
@@ -14,6 +15,11 @@ function InitSounds()
     SetSoundParamsFromLabel(gg_snd_Wetlandsday, "SunkenRuinsDay")
     SetSoundDuration(gg_snd_Wetlandsday, 175048)
     SetSoundVolume(gg_snd_Wetlandsday, 10)
+end
+
+function CreateRegions()
+    local we
+    gg_rct_grid = Rect(-256.0, -256.0, 256.0, 256.0)
 end
 
 function CreateCameras()
@@ -89,6 +95,7 @@ function main()
     SetAmbientNightSound("LordaeronSummerNight")
     SetMapMusic("Music", true, 0)
     InitSounds()
+    CreateRegions()
     CreateCameras()
     InitBlizzard()
     InitGlobals()

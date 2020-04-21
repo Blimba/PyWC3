@@ -33,3 +33,9 @@ STRING 7
 Player 2
 }
 
+STRING 8
+// Destructibles: B000 (aaaaaaaaaa), Name (Name)
+{
+aaaaaaaaaa
+}
+
