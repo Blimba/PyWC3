@@ -26,10 +26,11 @@ class Vector2:
     def destroy(self):
         cls = type(self)
         if cls in Vector2._bin:
-            if self not in Vector2._bin[cls]:
+            if self in Vector2.active:
                 cls.active.remove(self)
                 Vector2._bin[cls].append(self)
         else:
+            cls.active.remove(self)
             Vector2._bin[cls] = [self]
 
     def __init__(self,x=0.0,y=0.0,temp=False):
@@ -161,6 +162,15 @@ class Rectangle:
         maxx = p1.x if p1.x > p2.x else p2.x
         maxy = p1.y if p1.y > p2.y else p2.y
         return Rectangle(minx,miny,maxx,maxy)
+
+    @staticmethod
+    def from_rect(rect):
+        return Rectangle(GetRectMinX(rect), GetRectMinY(rect), GetRectMaxX(rect), GetRectMaxY(rect))
+
+    def random_point(self):
+        x = math.random()*(self.maxx-self.minx)+self.minx
+        y = math.random()*(self.maxy-self.miny)+self.miny
+        return Vector2(x,y,True)
 
     def __contains__(self, p):
         if isinstance(p, Vector2):

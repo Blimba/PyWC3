@@ -45,7 +45,7 @@ AddScriptHook(TerrainGrid._init,MAIN_BEFORE)
 
 def _ft(x,y,temp=False):
     z = TerrainGrid.z(x,y)
-    if IsTerrainPathable(x, y, PATHING_TYPE_WALKABILITY): z += 200.0
+    if IsTerrainPathable(x, y, PATHING_TYPE_WALKABILITY): z += 2000.0
     return Vector3(x,y,z,temp)
 Vector3.from_terrain = _ft
 

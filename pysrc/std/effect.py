@@ -112,6 +112,9 @@ class Effect(Handle):
             BlzSetSpecialEffectAlpha(self._handle, a)
         return self
 
+    def set_alpha(self,a):
+        BlzSetSpecialEffectAlpha(self._handle, a)
+
     def animate(self, anim, timescale=1.0):
         if timescale == 1.0:
             BlzPlaySpecialEffect(self._handle, anim)

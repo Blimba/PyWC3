@@ -32,6 +32,10 @@ class WaypointParticle(Particle):
         self.t.start(0.0, WaypointParticle._timeout)
         self.first = None
 
+    def share_waypoints(self,wpp):
+        self.waypoint = wpp.waypoint
+        return self
+
     def add_waypoint(self,wp):
         if self.waypoint == None:
             self.first = wp
@@ -59,12 +63,16 @@ class WaypointParticle(Particle):
             self.go_to()
 
     def go_to(self,wp=None):
-        if wp == None: wp = self.waypoint
+        if wp == None:
+            wp = self.waypoint
+        else:
+            self.waypoint = wp
         dv = (wp-self.position)
         time = len(dv)/self.speed
         dv = dv/time
         self.update_velocity(dv.x,dv.y,dv.z)
         self.t.start(time,WaypointParticle._timeout)
+        return self
     def on_destination_reached(self):
         self.go_to()  # circular movement is standard.
 
@@ -93,6 +101,10 @@ class WaypointUnit(Unit,Cyclist):
         if WaypointUnit._start == None:
             WaypointUnit._start = self
 
+    def share_waypoints(self,wpu):
+        self.waypoint = wpu.waypoint
+        return self
+
     def add_waypoint(self,wp):
         if self.waypoint == None:
             self.first = wp
@@ -111,8 +123,12 @@ class WaypointUnit(Unit,Cyclist):
         return self
 
     def go_to(self,wp=None):
-        if wp == None: wp = self.waypoint
+        if wp == None:
+            wp = self.waypoint
+        else:
+            self.waypoint = wp
         self.order("move",wp.x,wp.y)
+        return self
     def on_destination_reached(self):
         self.go_to()
     def check(self):
