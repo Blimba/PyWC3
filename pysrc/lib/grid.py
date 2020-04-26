@@ -5,9 +5,13 @@ class Grid2:
     class Node:
         reuse = []
         _fifo_buffer_size = 100  # this is the amount of temporary nodes used
+        _loc = None
+
+        _bin = {}
+
         def __new__(cls,parent_grid,x,y,X,Y,items=None):
-            if len(Grid2.Node.reuse) > Grid2.Node._fifo_buffer_size:
-                o = Grid2.Node.reuse.pop(0)
+            if cls in Grid2.Node._bin and len(Grid2.Node._bin[cls]) > cls._fifo_buffer_size:
+                o = Grid2.Node._bin[cls].pop(0)
                 return o
             else:
                 o = object.__new__(cls)
@@ -18,8 +22,13 @@ class Grid2:
             self.y = y
             self.X = X
             self.Y = Y
+
         def destroy(self):
-            Grid2.Node.reuse.append(self)
+            cls = type(self)
+            if cls in Grid2.Node._bin:
+                Grid2.Node._bin[cls].append(self)
+            else:
+                Grid2.Node._bin[cls] = [self]
 
         def up(self, wrap=False):
             if not wrap and self.Y+1 >= self.grid.sY: return None
@@ -34,7 +43,7 @@ class Grid2:
             if not wrap and  self.X + 1 >= self.grid.sX: return None
             return self.grid[self.X+1,self.Y]
         def __str__(self):
-            return "Node[{},{}] at x: {}, y: {}".format(self.X, self.Y, self.x, self.y)
+            return "{}[{},{}] at x: {}, y: {}".format(type(self),self.X, self.Y, self.x, self.y)
 
     def __init__(self,grid_interval,size_x,size_y):
         self.grid_interval = grid_interval
