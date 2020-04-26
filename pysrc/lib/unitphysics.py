@@ -16,17 +16,18 @@ class Friction(Force):
                 if hasattr(particle.collision_object, "velocity"):
                     return (particle.collision_object.velocity - particle.velocity) * (self.coeff)
                 return (particle.velocity) * (-self.coeff)
-            return (particle.terrain_velocity-particle.velocity) * (self.coeff)
+            v = (particle.terrain_velocity-particle.velocity)
+            return v.multiply(self.coeff)
         return self
-Friction_Force = Friction(200)
+Friction_Force = Friction(120)
 class PhysicsUnit(Unit,Particle):
     # these are the spacer offsets that are used to check unit collisions before they really happen on the unit himself
     # they might need adjustment
     offsets = [
-        Vector3(-5, 0, 0),
-        Vector3(0, -5, 0),
-        Vector3(5, 0, 0),
-        Vector3(0, 5, 0),
+        Vector3(-8, -8, 0),
+        Vector3(8, -8, 0),
+        Vector3(8, 8, 0),
+        Vector3(-8, 8, 0),
     ]
     tps = [None,None,None,None]
     def __init__(self,playerid,unitid=0,x=0,y=0,face=0.0,skinid=0):
@@ -34,15 +35,18 @@ class PhysicsUnit(Unit,Particle):
         Particle.__init__(self,self,Vector3(0,0,0),10,False,0,BlzGetUnitCollisionSize(self._handle))
         UnitAddAbility(self._handle,FourCC('Amrf'))
         UnitRemoveAbility(self._handle,FourCC('Amrf'))
+        self.forces.append(Friction_Force)
         self.forces.append(G)
         self.height = 90
         self._terrain_flag = False
         self.default_move_speed = self.obj.move_speed
         self.obj.pathing(False)
         self.fall_damage_multiplier = 1
-        self.forces.append(Friction_Force)
+
 
     def on_walk_terrainhit(self,wv,pv):
+        if pv.z < -100:
+            pv.z = -100
         self.position.subtract(wv * (3 / (1 + math.exp((pv.z + 45)/5))))
 
     def on_terrainhit(self,normal):
@@ -53,13 +57,25 @@ class PhysicsUnit(Unit,Particle):
         prv = pv.project(normal)  # project the penetration to the normal
         self.fall_damage(len(prv)-900)
         if self.dead == False:
-            self.velocity.subtract(prv)  # impulse normal penetration to velocity
-            if len(self.velocity) < 30:
-                fc = 0.8 / (1+math.exp((-len(prv)+10)))
-                self.velocity.add(self.velocity *  -fc)
+            u = Vector3(0,0,1,True)
+            if len(normal.project(u)) < 0.1:
+                v = (Vector3.reflect(self.velocity, normal) + Vector3.project(self.velocity, normal) * 0.1) * 0.9
+                self.update_velocity(v.x, v.y, v.z)
+            else:
+                self.velocity.subtract(prv)  # impulse normal penetration to velocity
+                v = None
+                if self.collision_object and hasattr(self.collision_object, "velocity"):
+                    v = self.velocity - self.collision_object.velocity
+                else:
+                    v = self.velocity - self.terrain_velocity
+                v.subtract(self.velocity.project(normal))
+                if len(v) < 50:
+                    self.velocity.subtract(v)
+
 
     def fall_damage(self,impulse):
         if impulse > 0:
+            print('f',impulse,self.velocity,self.position,self.terrain_point())
             impulse = 1.05 / (1+math.exp((-impulse+200)/75.))
             self.obj.life = self.obj.life - impulse * self.obj.max_hp * self.fall_damage_multiplier
 
@@ -90,6 +106,10 @@ class PhysicsUnit(Unit,Particle):
                     v *= 0.5
                 self.position.subtract(v)
 
+    def update_velocity(self,x,y,z):
+        self._terrain_flag = False
+        Particle.update_velocity(self,x,y,z)
+
     def on_grounded(self):
         self.obj.move_speed = self.default_move_speed
 
@@ -110,13 +130,16 @@ class PhysicsUnit(Unit,Particle):
         if tp.z > self.position.z:
             self._onterrain = True
             self.on_walk_terrainhit(self.walking_velocity,self.position-tp)
+            if (self.position.z-tp.z) > 50:
+                print('a',self.position,self.velocity,tp)
             self.position.z = tp.z+0.1
         for i,offset in enumerate(PhysicsUnit.offsets):
             np = self.position+offset
             tp = self.terrain_point(np)
             PhysicsUnit.tps[i] = tp
             if tp.z > np.z:
-                self.on_walk_terrainhit(offset*(len(self.walking_velocity)/len(offset)),np - tp)
+                # self.on_walk_terrainhit(self.walking_velocity, self.position - tp)
+                self.on_walk_terrainhit(offset*(self.obj.move_speed*Particle.period/len(offset)),np - tp)
         self.set_collision_normal(Vector3.cross(PhysicsUnit.tps[2]-PhysicsUnit.tps[0],PhysicsUnit.tps[3]-PhysicsUnit.tps[1]).normalize())
         Particle.update(self)
         if self.dead == False:
@@ -130,4 +153,5 @@ class PhysicsUnit(Unit,Particle):
                         self._terrain_flag = False
                         self.on_airborn()
 
-
+        if len(self.velocity) > 5000:
+            print('b',self.position,self.velocity)
