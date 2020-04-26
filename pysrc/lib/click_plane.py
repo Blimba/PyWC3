@@ -11,6 +11,7 @@ class ClickPlane(Rectangle, Cyclist):
     tr = None
     _node1 = None
     ignore_next = False
+    _loc = None
     def __gc__(self):
         print("collecting clickplane")
     def __init__(self, minx, miny, maxx, maxy, z):
@@ -126,13 +127,17 @@ class ClickPlane(Rectangle, Cyclist):
         if ClickPlane.ignore_next:
             ClickPlane.ignore_next = False
             return False
-        clickpoint = Vector3.from_terrain(GetOrderPointX(), GetOrderPointY())
+        x = GetOrderPointX()
+        y = GetOrderPointY()
+        MoveLocation(ClickPlane._loc,x,y)
+        clickpoint = Vector3(x, y, GetLocationZ(ClickPlane._loc))
         try: Camera.sync_eye_position(GetPlayerId(GetOwningPlayer(GetOrderedUnit())),ClickPlane._cam_sync, clickpoint, GetOrderedUnit(), GetIssuedOrderId())
         except: print(Error)
 
     @staticmethod
     def _init():
         ClickPlane.tr = CreateTrigger()
+        ClickPlane._loc = Location(0,0)
         for i in range(bj_MAX_PLAYERS):
             TriggerRegisterPlayerUnitEvent(ClickPlane.tr, Player(i), EVENT_PLAYER_UNIT_ISSUED_POINT_ORDER, None)
         TriggerAddAction(ClickPlane.tr, ClickPlane._ordered)
