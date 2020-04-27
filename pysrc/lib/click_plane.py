@@ -4,7 +4,7 @@ from .camera import *
 from .cyclist import *
 from ..df.commonj import *
 from ..df.blizzardj import bj_MAX_PLAYERS
-
+from .mouseevent import MouseEvent
 
 
 class ClickPlane(Rectangle, Cyclist):
@@ -29,24 +29,12 @@ class ClickPlane(Rectangle, Cyclist):
             node.prev = self
             if(z > ClickPlane._node1.z): ClickPlane._node1 = self
 
-    def __contains__(self, p):
-        if isinstance(p, Vector2):
-            return p.x >= self.minx and p.x <= self.maxx and p.y >= self.miny and p.y <= self.maxy
-
-    def obscured(self, clickpoint, eye):
-        if(self.z < clickpoint.z or self.z > eye.z):
-            return False
-        dx = clickpoint.x - eye.x
-        dy = clickpoint.y - eye.y
-        dz = eye.z - clickpoint.z
-        zrat = 1-(self.z-clickpoint.z)/dz
-        x = eye.x + dx * zrat
-        y = eye.y + dy * zrat
-        self.redirect = Vector2(x,y,True)
-        if self.redirect in self:  # if the point is within the bounds
-            self.redirect = Vector3(x,y,self.z,True)
-            return True
-        return False
+    def destroy(self):
+        if self == ClickPlane._node1:
+            ClickPlane._node1 = self.next
+        self.exclude()
+        if self == ClickPlane._node1:
+            ClickPlane._node1 = None
 
     def set_coordinates(self,minx,miny,maxx,maxy,z):
         self.minx = minx
@@ -74,13 +62,6 @@ class ClickPlane(Rectangle, Cyclist):
                     break
                 node = nnode
 
-    def destroy(self):
-        if self == ClickPlane._node1:
-            ClickPlane._node1 = self.next
-        self.exclude()
-        if self == ClickPlane._node1:
-            ClickPlane._node1 = None
-
     @staticmethod
     def print_list():
         node = ClickPlane._node1
@@ -93,21 +74,39 @@ class ClickPlane(Rectangle, Cyclist):
             if (node == ClickPlane._node1) or node == None or i > 5: break
         print(", ".join(lst))
 
+    def __contains__(self, p):
+        if isinstance(p, Vector2):
+            return p.x >= self.minx and p.x <= self.maxx and p.y >= self.miny and p.y <= self.maxy
+
+    def obscured(self, clickpoint, eye):
+        print(clickpoint)
+        if(self.z < clickpoint.z or self.z > eye.z):
+            return None
+        dx = clickpoint.x - eye.x
+        dy = clickpoint.y - eye.y
+        dz = eye.z - clickpoint.z
+        zrat = 1-(self.z-clickpoint.z)/dz
+        x = eye.x + dx * zrat
+        y = eye.y + dy * zrat
+        if x >= self.minx and x <= self.maxx and y >= self.miny and y <= self.maxy:
+            return Vector3(x,y,self.z,True)
+        return None
+
+
     @staticmethod
     def _cam_sync(ns, clickpoint, unit, order_id):
         eye = Vector3(ns.data[0],ns.data[1],ns.data[2],True)
         try:
             node = ClickPlane._node1
             while node != None:
-                if node.obscured(clickpoint, eye):
-                    # ClickPlane.ignore_next = True
-                    IssuePointOrderById(unit, order_id, node.redirect.x, node.redirect.y)
-                    clickpoint.x = node.redirect.x
-                    clickpoint.y = node.redirect.y
-                    clickpoint.z = node.redirect.z
+                v = node.obscured(clickpoint, eye)
+                if v != None:
+
+                    clickpoint.update_vector(v)
                     break
                 node = node.next
                 if node == ClickPlane._node1: break
+            IssuePointOrderById(unit, order_id, clickpoint.x, clickpoint.y)
             str = "confirmation.mdl"
             if GetOwningPlayer(unit) != GetLocalPlayer(): str = ""
             fx = AddSpecialEffect(str,clickpoint.x,clickpoint.y)
@@ -123,34 +122,18 @@ class ClickPlane(Rectangle, Cyclist):
         clickpoint.destroy()
 
     @staticmethod
-    def _ordered():
-        if ClickPlane.ignore_next:
-            ClickPlane.ignore_next = False
-            return False
-        x = GetOrderPointX()
-        y = GetOrderPointY()
-        MoveLocation(ClickPlane._loc,x,y)
-        clickpoint = Vector3(x, y, GetLocationZ(ClickPlane._loc))
-        try: Camera.sync_eye_position(GetPlayerId(GetOwningPlayer(GetOrderedUnit())),ClickPlane._cam_sync, clickpoint, GetOrderedUnit(), GetIssuedOrderId())
-        except: print(Error)
+    def _ordered(e):
+        if e.unit_order != None:
+            MoveLocation(ClickPlane._loc,e.x,e.y)
+            clickpoint = Vector3(e.x, e.y, GetLocationZ(ClickPlane._loc))
+            try: Camera.sync_eye_position(GetPlayerId(GetOwningPlayer(e.ordered_unit)),ClickPlane._cam_sync, clickpoint, e.ordered_unit, e.unit_order)
+            except: print(Error)
+            IssueImmediateOrder(e.ordered_unit, "stop")
 
     @staticmethod
     def _init():
-        ClickPlane.tr = CreateTrigger()
+        MouseEvent(ClickPlane._ordered)
         ClickPlane._loc = Location(0,0)
-        for i in range(bj_MAX_PLAYERS):
-            TriggerRegisterPlayerUnitEvent(ClickPlane.tr, Player(i), EVENT_PLAYER_UNIT_ISSUED_POINT_ORDER, None)
-        TriggerAddAction(ClickPlane.tr, ClickPlane._ordered)
+
 
 AddScriptHook(ClickPlane._init, MAIN_BEFORE)
-
-# overwrite natives, as trigger orders should be ignored
-_IssuePointOrderById = IssuePointOrderById
-def IssuePointOrderById(whichUnit, order, x, y):
-    ClickPlane.ignore_next = True
-    _IssuePointOrderById(whichUnit, order, x, y)
-
-_IssuePointOrder = IssuePointOrder
-def IssuePointOrder(whichUnit, order, x, y):
-    ClickPlane.ignore_next = True
-    _IssuePointOrder(whichUnit, order, x, y)
