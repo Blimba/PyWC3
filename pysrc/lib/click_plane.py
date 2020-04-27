@@ -79,7 +79,6 @@ class ClickPlane(Rectangle, Cyclist):
             return p.x >= self.minx and p.x <= self.maxx and p.y >= self.miny and p.y <= self.maxy
 
     def obscured(self, clickpoint, eye):
-        print(clickpoint)
         if(self.z < clickpoint.z or self.z > eye.z):
             return None
         dx = clickpoint.x - eye.x
