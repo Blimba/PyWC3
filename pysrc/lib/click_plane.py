@@ -5,8 +5,8 @@ from .cyclist import *
 from ..df.commonj import *
 from ..df.blizzardj import bj_MAX_PLAYERS
 from .mouseevent import MouseEvent
-
-
+from .order_history import OrderHistory
+from ..std.unit import Unit
 class ClickPlane(Rectangle, Cyclist):
     tr = None
     _node1 = None
@@ -29,6 +29,10 @@ class ClickPlane(Rectangle, Cyclist):
             node.prev = self
             if(z > ClickPlane._node1.z): ClickPlane._node1 = self
 
+    @staticmethod
+    def from_rect(rect,z=0):
+        return ClickPlane(GetRectMinX(rect), GetRectMinY(rect), GetRectMaxX(rect), GetRectMaxY(rect),z)
+
     def destroy(self):
         if self == ClickPlane._node1:
             ClickPlane._node1 = self.next
@@ -46,10 +50,11 @@ class ClickPlane(Rectangle, Cyclist):
         # We need to keep the list sorted. Check if we're changing the coordinates below another:
         node = self.next
         while z < node.z:
+            if node == ClickPlane._node1: break
             if self == ClickPlane._node1: ClickPlane._node1 = node
             node = node.next
-            node.swap_prev()
-            if node == ClickPlane._node1: break
+            node.prev.swap_prev()
+
 
         # Check if we're increasing our coordinates above another
         if ClickPlane._node1 != self:
@@ -127,7 +132,14 @@ class ClickPlane(Rectangle, Cyclist):
             clickpoint = Vector3(e.x, e.y, GetLocationZ(ClickPlane._loc))
             try: Camera.sync_eye_position(GetPlayerId(GetOwningPlayer(e.ordered_unit)),ClickPlane._cam_sync, clickpoint, e.ordered_unit, e.unit_order)
             except: print(Error)
-            IssueImmediateOrder(e.ordered_unit, "stop")
+            if Handle.get(e.ordered_unit):
+                u = Unit.get(e.ordered_unit)
+                if len(u.order_list) > 1:
+                    if u.was_idle():
+                        u.order("stop")  # unit was idle, he shouldnt go off in a weird direction
+                    else:
+                        u.repeat_order(-2)  # to prevent the units going to strange locations for a moment, reorder its last 'real' order
+
 
     @staticmethod
     def _init():
