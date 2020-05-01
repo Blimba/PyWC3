@@ -15,6 +15,10 @@ class Item(Handle):
     def destroy(self):
         RemoveItem(self._handle)
 
+    @staticmethod
+    def get(handle):
+        return Handle.get(handle) or Item(handle)
+
     @property
     def type(self):
         return GetItemTypeId(self._handle)
