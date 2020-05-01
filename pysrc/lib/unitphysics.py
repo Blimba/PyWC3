@@ -75,8 +75,9 @@ class PhysicsUnit(Unit,Particle):
 
     def fall_damage(self,impulse):
         if impulse > 0:
-            print('f',impulse,self.velocity,self.position,self.terrain_point())
             impulse = 1.05 / (1+math.exp((-impulse+200)/75.))
+            if impulse > 1:
+                print('f', impulse, self.velocity, self.position, self.terrain_point())
             self.obj.life = self.obj.life - impulse * self.obj.max_hp * self.fall_damage_multiplier
 
 
@@ -120,26 +121,39 @@ class PhysicsUnit(Unit,Particle):
 
     def update(self):
         self._onterrain = False
-        self.walking_velocity = Vector3(self.obj.x,self.obj.y,self.position.z,True).subtract(self.position)
-        self.position.x = self.obj.x
-        self.position.y = self.obj.y
-        tp = self.terrain_point()
+        objpos = Vector3(self.obj.x,self.obj.y,self.position.z,True)
+        tp = self.terrain_point(objpos)
+        self.walking_velocity = objpos.subtract(self.position)
+
         # should probably implement the following better...
         if self.collision_object != None and hasattr(self.collision_object, "velocity"):
             self.walking_velocity.subtract(self.collision_object.velocity * (Particle.period / self.collision_sampling))
         if tp.z > self.position.z:
             self._onterrain = True
             self.on_walk_terrainhit(self.walking_velocity,self.position-tp)
-            if (self.position.z-tp.z) > 50:
+            if (self.position.z-tp.z) < -50:
+                # we shouldn't really get to this point, but if we do, at least the unit doesn't magically go up and crash to its death...
                 print('a',self.position,self.velocity,tp)
-            self.position.z = tp.z+0.1
+            else:
+                self.position.x = self.obj.x
+                self.position.y = self.obj.y
+                self.position.z = tp.z+0.1
+        else:
+            self.position.x = self.obj.x
+            self.position.y = self.obj.y
+        hitv = Vector3(0,0,0,True)
+        pv = Vector3(0,0,0,True)
+        hits = 0
         for i,offset in enumerate(PhysicsUnit.offsets):
             np = self.position+offset
             tp = self.terrain_point(np)
             PhysicsUnit.tps[i] = tp
-            if tp.z > np.z:
-                # self.on_walk_terrainhit(self.walking_velocity, self.position - tp)
-                self.on_walk_terrainhit(offset*(self.obj.move_speed*Particle.period/len(offset)),np - tp)
+            if (tp.z-np.z) > 50:
+                pv.add(np-tp)
+                hitv.add(offset)
+                hits += 1
+        if hits > 0:
+            self.on_walk_terrainhit(hitv*(self.obj.move_speed*Particle.period/len(hitv)),pv)
         self.set_collision_normal(Vector3.cross(PhysicsUnit.tps[2]-PhysicsUnit.tps[0],PhysicsUnit.tps[3]-PhysicsUnit.tps[1]).normalize())
         Particle.update(self)
         if self.dead == False:
@@ -154,4 +168,5 @@ class PhysicsUnit(Unit,Particle):
                         self.on_airborn()
 
         if len(self.velocity) > 5000:
+            # we shouldn't really get to this point
             print('b',self.position,self.velocity)
