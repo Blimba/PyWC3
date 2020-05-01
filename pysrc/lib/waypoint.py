@@ -69,8 +69,12 @@ class WaypointParticle(Particle):
             self.waypoint = wp
         dv = (wp-self.position)
         time = len(dv)/self.speed
-        dv = dv/time
-        self.update_velocity(dv.x,dv.y,dv.z)
+        if time <= Particle.period:
+            time = Particle.period
+        else:
+            dv.divide(time)
+            self.update_velocity(dv.x,dv.y,dv.z)
+
         self.t.start(time,WaypointParticle._timeout)
         return self
     def on_destination_reached(self):
@@ -81,11 +85,12 @@ class WaypointParticle(Particle):
         self.t = None
         Particle.destroy(self)
         node = self.waypoint
-        while node != None and node.next != node:
-            node = node.next
-            node.prev.destroy()
-        if node != None:
-            node.destroy()
+        if hard:
+            while node != None and node.next != node:
+                node = node.next
+                node.prev.destroy()
+            if node != None:
+                node.destroy()
 
 
 
