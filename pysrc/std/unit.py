@@ -450,7 +450,7 @@ class Unit(Handle):
 
     @name.setter
     def name(self,newname):
-        return BlzSetUnitName(self._handle, newname)
+        BlzSetUnitName(self._handle, newname)
 
     @property
     def type(self):
