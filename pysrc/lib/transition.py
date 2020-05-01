@@ -6,14 +6,15 @@ from .periodic import *
 class _EASE_LINEAR:
     _bin = {}
     def __new__(cls, *args):
-        if cls in _EASE_LINEAR._bin and len(_EASE_LINEAR._bin[cls]) > 0:
-            return _EASE_LINEAR._bin[cls].pop()
+        if cls in _EASE_LINEAR._bin and len(_EASE_LINEAR._bin[cls]) > 10:
+            return _EASE_LINEAR._bin[cls].pop(0)
         else:
             return object.__new__(cls)
 
     def destroy(self):
         if type(self) in _EASE_LINEAR._bin:
-            _EASE_LINEAR._bin[type(self)].append(self)
+            if self not in _EASE_LINEAR._bin[type(self)]:
+                _EASE_LINEAR._bin[type(self)].append(self)
         else:
             _EASE_LINEAR._bin[type(self)] = [self]
 
@@ -157,19 +158,6 @@ class _EASE_SM_A_RAD(_EASE_LINEAR):
         return self.start + self.v0 * t + 0.5 * self.a * t * t + self.A * t * t * t / 3
 
 class Transition(Periodic):
-    _bin = {}
-    def __new__(cls, *args):
-        if cls in Transition._bin and len(Transition._bin[cls]) > 0:
-            return Transition._bin[cls].pop()
-        else:
-            return object.__new__(cls)
-
-    def free(self):
-        if type(self) in Transition._bin:
-            Transition._bin[type(self)].append(self)
-        else:
-            Transition._bin[type(self)] = [self]
-
     @staticmethod
     def Smooth_Acceleration_Angular(duration, start, stop, v0=0.0, v_end=0.0):
         return _EASE_SM_A_RAD(duration, start, stop, v0, v_end)
@@ -219,14 +207,38 @@ class Transition(Periodic):
             return _EASE_SPL_A_RAD(duration,start,stop,v0,v_end)
         elif method=='smooth':
             return _EASE_SM_A_RAD(duration,start,stop,v0,v_end)
+
+    _bin = {}
+    def __new__(cls, *args):
+        if cls in Transition._bin and len(Transition._bin[cls]) > 10:
+            return Transition._bin[cls].pop(0)
+        else:
+            return object.__new__(cls)
+
     def __init__(self,func,*args):
         Periodic.__init__(self)
         self.func = func
         self.args = args
         self.t = 0
         self._lst = [arg for arg in args]
-        self.callback = None
         self.active = True
+        self.dwd = False
+
+    def destroy(self):
+        if self.active:
+            Periodic.destroy(self)
+        for i,arg in enumerate(self.args):
+            if type(arg) in Transition._methods:
+                arg.destroy()
+        if type(self) in Transition._bin:
+            if self not in Transition._bin[type(self)]:
+                Transition._bin[type(self)].append(self)
+        else:
+            Transition._bin[type(self)] = [self]
+
+    def destroy_when_done(self):
+        self.dwd = True
+        return self
 
     def on_period(self):
         cont = False
@@ -241,14 +253,8 @@ class Transition(Periodic):
         f(*self._lst)
         if not cont:
             self.t -= Periodic.period
-            if callable(self.callback):
-                self.callback(self)
-            self.destroy()
+            self.active = False
+            Periodic.destroy(self)
+            if self.dwd:
+                self.destroy()
 
-    def destroy(self):
-        self.active = False
-        for i,arg in enumerate(self.args):
-            if type(arg) in Transition._methods:
-                arg.destroy()
-        Periodic.destroy(self)
-        self.free()
