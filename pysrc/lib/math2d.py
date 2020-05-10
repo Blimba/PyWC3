@@ -167,9 +167,9 @@ class Rectangle:
     def from_rect(rect):
         return Rectangle(GetRectMinX(rect), GetRectMinY(rect), GetRectMaxX(rect), GetRectMaxY(rect))
 
-    def random_point(self):
-        x = math.random()*(self.maxx-self.minx)+self.minx
-        y = math.random()*(self.maxy-self.miny)+self.miny
+    def random_point(self,crop=0):
+        x = math.random()*(self.maxx-(crop*2)-self.minx)+self.minx+crop
+        y = math.random()*(self.maxy-(crop*2)-self.miny)+self.miny+crop
         return Vector2(x,y,True)
 
     def __contains__(self, p):
