@@ -57,7 +57,7 @@ class WaypointParticle(Particle):
     def _timeout():
         self = Timer.get_expired().data
         self.waypoint = self.waypoint.next
-        if self.first == self.waypoint:
+        if self.first == self.waypoint or self.waypoint == self.waypoint.next:
             self.on_destination_reached()
         else:
             self.go_to()
