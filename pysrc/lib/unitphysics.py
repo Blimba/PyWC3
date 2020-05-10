@@ -42,6 +42,7 @@ class PhysicsUnit(Unit,Particle):
         self.default_move_speed = self.obj.move_speed
         self.obj.pathing(False)
         self.fall_damage_multiplier = 1
+        self.invis = False
 
 
     def on_walk_terrainhit(self,wv,pv):
@@ -124,7 +125,9 @@ class PhysicsUnit(Unit,Particle):
         objpos = Vector3(self.obj.x,self.obj.y,self.position.z,True)
         tp = self.terrain_point(objpos)
         self.walking_velocity = objpos.subtract(self.position)
-
+        if self.invis:
+            self.color(255,255,255,255)
+            self.invis = False
         # should probably implement the following better...
         if self.collision_object != None and hasattr(self.collision_object, "velocity"):
             self.walking_velocity.subtract(self.collision_object.velocity * (Particle.period / self.collision_sampling))
@@ -132,8 +135,10 @@ class PhysicsUnit(Unit,Particle):
             self._onterrain = True
             self.on_walk_terrainhit(self.walking_velocity,self.position-tp)
             if (self.position.z-tp.z) < -50:
+                self.invis = True
+                self.color(255,255,255,0)
                 # we shouldn't really get to this point, but if we do, at least the unit doesn't magically go up and crash to its death...
-                print('a',self.position,self.velocity,tp)
+                # print('a',self.position,self.velocity,tp)
             else:
                 self.position.x = self.obj.x
                 self.position.y = self.obj.y
@@ -154,8 +159,11 @@ class PhysicsUnit(Unit,Particle):
                 hits += 1
         if hits > 0:
             self.on_walk_terrainhit(hitv*(self.obj.move_speed*Particle.period/len(hitv)),pv)
+            if hits >= len(PhysicsUnit.offsets):
+                self.kill()
         self.set_collision_normal(Vector3.cross(PhysicsUnit.tps[2]-PhysicsUnit.tps[0],PhysicsUnit.tps[3]-PhysicsUnit.tps[1]).normalize())
-        Particle.update(self)
+        if self.dead == False:
+            Particle.update(self)
         if self.dead == False:
             if self._onterrain:
                 if not self._terrain_flag:
