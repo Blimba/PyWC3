@@ -73,6 +73,7 @@ class Particle(Periodic):
         self.on_unithit = None
         self.on_terrainhit = None
         self.on_timeout = None
+        self.custom_collision = None
         self.height = 0
         self.terrain_velocity = Vector3(0,0,0)
 
@@ -218,6 +219,9 @@ class Particle(Periodic):
                                     return None
                     GroupRemoveUnit(Particle._group, u)
                     u = FirstOfGroup(Particle._group)
+
+            if callable(self.custom_collision) and self.dead == False:
+                self.custom_collision()
         if self.dead == True:
             return None
         # container for map bounds safety as well as to prevent units from going where they should not
