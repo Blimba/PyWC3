@@ -29,8 +29,8 @@ class CTimer():
         ITimer.recycle.append(t)
     def timer(self,time,callback,*args):
         t = None
-        if len(ITimer.recycle) > 0:
-            t = ITimer.recycle.pop()
+        if len(ITimer.recycle) > 5:
+            t = ITimer.recycle.pop(0)
         else:
             t = Timer()
         t._instance = self
@@ -51,10 +51,11 @@ class ITimer():
     @staticmethod
     def start(time,callback,*args):
         t = None
-        if len(ITimer.recycle) > 0:
-            t = ITimer.recycle.pop()
+        if len(ITimer.recycle) > 5:
+            t = ITimer.recycle.pop(0)
         else:
             t = Timer()
         t._callback = callback
         t._args = args
         t.start(time,ITimer._timeout)
+        return t
