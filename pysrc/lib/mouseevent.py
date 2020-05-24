@@ -5,6 +5,7 @@ from ..std.timer import *
 class MouseEvent:
     timer = None
     _lst = []
+    _events = 0
 
     def __init__(self, callback, *args):
         self.callback = callback
@@ -13,6 +14,9 @@ class MouseEvent:
 
     @staticmethod
     def _timeout():
+        MouseEvent._events -= 1
+        if MouseEvent._events >= 1:
+            print('Double mouse event ({} events)!'.format(MouseEvent._events))
         for me in MouseEvent._lst:
             me.callback(*me.args)
 
@@ -20,19 +24,27 @@ class MouseEvent:
     def _click():
         # clicking anywhere apart from on the map gives 0.0 0.0 as coordinates
         if BlzGetTriggerPlayerMouseX() != 0.0 and BlzGetTriggerPlayerMouseY() != 0.0:
-            MouseEvent.x = BlzGetTriggerPlayerMouseX()
-            MouseEvent.y = BlzGetTriggerPlayerMouseY()
-            MouseEvent.button = BlzGetTriggerPlayerMouseButton()
-            MouseEvent.player = GetTriggerPlayer()
-            MouseEvent.timer.start(0.0, MouseEvent._timeout)
-            MouseEvent.focus_unit = BlzGetMouseFocusUnit()
-            MouseEvent.unit_order = None
-            MouseEvent.ordered_unit = None
+            MouseEvent._events += 1
+            if MouseEvent._events > 1 and GetTriggerPlayer() != MouseEvent.player:
+                print('Two player mouse event ({} events), Player {} ignored!'.format(MouseEvent._events,GetPlayerId(GetTriggerPlayer())))
+            if MouseEvent._events == 1:
+                MouseEvent.x = BlzGetTriggerPlayerMouseX()
+                MouseEvent.y = BlzGetTriggerPlayerMouseY()
+                MouseEvent.button = BlzGetTriggerPlayerMouseButton()
+                MouseEvent.player = GetTriggerPlayer()
+
+                MouseEvent.timer.start(0.0, MouseEvent._timeout)
+                MouseEvent.focus_unit = BlzGetMouseFocusUnit()
+                MouseEvent.unit_order = None
+                MouseEvent.ordered_unit = None
+            else:
+                MouseEvent._events -= 1
 
     @staticmethod
     def _ordered():
-        MouseEvent.unit_order = GetIssuedOrderId()
-        MouseEvent.ordered_unit = GetOrderedUnit()
+        if MouseEvent._events == 1:
+            MouseEvent.unit_order = GetIssuedOrderId()
+            MouseEvent.ordered_unit = GetOrderedUnit()
 
     @staticmethod
     def _make_triggers():
