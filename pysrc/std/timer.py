@@ -48,6 +48,7 @@ class Timer(Handle):
         self.periodic = periodic
         Handle.__init__(self,CreateTimer())
         self._dialog = None
+        self.remaining = -1
 
     # def __gc__(self):
     #     # currently this never runs
@@ -68,11 +69,23 @@ class Timer(Handle):
         return Handle.get(GetExpiredTimer())
 
     def pause(self):
-        PauseTimer(self._handle)
+        if self.periodic:
+            # this also has weird sideeffects for periodic timers, but that's how it is.
+            PauseTimer(self._handle)
+        else:
+            # non-periodic timers behave funky when paused. https://www.hiveworkshop.com/threads/issues-with-timer-functions.309433/
+            self.remaining = self.get_remaining()
+            TimerStart(self._handle,0.0,False,None)
         return self
 
     def resume(self):
-        ResumeTimer(self._handle)
+        if self.periodic:
+            ResumeTimer(self._handle)
+        else:
+            # non-periodic timers behave funky when paused. https://www.hiveworkshop.com/threads/issues-with-timer-functions.309433/
+            if self.remaining >= 0:
+                TimerStart(self._handle, self.remaining, False, self.callback)
+            self.remaining = -1
         return self
 
     def destroy(self):
