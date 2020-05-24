@@ -6,35 +6,52 @@ Scene system to make delicate timing easier. Be careful: runtime errors within i
 from ..std.index import *
 from .itimer import *
 
-class Scene:
+class Scene(CTimer):
     def __init__(self,func):
         self.func = func
+        self.t = None
+        self.started = False
 
-    def resume(t,self):
-        coroutine.resume(self.co,self)
+    def resume(self):
+        if self.t != None and self.t.get_remaining() > 0:
+            print('resume scene',self.t.get_remaining(),self.t.get_elapsed())
+            ITimer.recycle.append(self.t)
+            self.t = self.timer(self.t.get_remaining(),self.resume)
+        else:
+            coroutine.resume(self.co,self)
 
     def pause(self):
         coroutine.pause()
 
     def wait(self,duration):
-        self.t += duration
-        ITimer.start(duration,Scene.resume,self)
+        self.time += duration
+        self.t = self.timer(duration, self.resume)
         coroutine.pause()
+
+    def stop(self):
+        if self.t != None:
+            self.t.pause()
+
+    def destroy(self):
+        if self.t != None:
+            self.t.pause()
+            ITimer.recycle.append(self.t)
 
     def wait_until(self,time):
-        ITimer.start(time-self.t, Scene.resume, self)
-        self.t = time
+        self.t = self.timer(time-self.t, self.resume)
+        self.time = time
         coroutine.pause()
 
-    def start(self):
+    def start(self,*args):
+        self.started = True
         self.co = coroutine.create(self.func)
-        self.t = 0
-        coroutine.resume(self.co,self)
+        self.time = 0
+        coroutine.resume(self.co,self,*args)
 
 
     def cinematic_mode(self,boolean):
         if boolean:
-            ClearTextMessages()
+            # ClearTextMessages()
             ShowInterface(False, 0.5)
             EnableUserControl(False)
             EnableOcclusion(False)
@@ -43,6 +60,11 @@ class Scene:
             EnableUserControl(True)
             EnableOcclusion(True)
 
+    def fade_out(self,duration):
+        self.fade(duration,[0,0,0,255],[0,0,0,0])
+
+    def fade_in(self,duration):
+        self.fade(duration,[0,0,0,0],[0,0,0,255])
 
     def fade(self,duration,rgba1,rgba2,bmode = None,tex = None):
         if bmode == None:
