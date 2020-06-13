@@ -506,11 +506,12 @@ class Unit(Handle):
         MoveLocation(Unit._loc, GetUnitX(self._handle), GetUnitY(self._handle))
         SetUnitFlyHeight(self._handle, z-GetLocationZ(Unit._loc), 0.0)  # test if 0 works
 
-    def set_position(self,x,y,z):
+    def set_position(self,x,y,z=None):
         SetUnitX(self._handle,x)
         SetUnitY(self._handle,y)
-        MoveLocation(Unit._loc, x, y)
-        SetUnitFlyHeight(self._handle, z - GetLocationZ(Unit._loc), 0.0)  # test if 0 works
+        if z != None:
+            MoveLocation(Unit._loc, x, y)
+            SetUnitFlyHeight(self._handle, z - GetLocationZ(Unit._loc), 0.0)  # test if 0 works
 
     def look_along(self,x,y,z,bone="bone_chest"):
         SetUnitLookAt(self._handle,bone,self._handle,x*100,y*100,z*100)
