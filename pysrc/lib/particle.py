@@ -76,6 +76,7 @@ class Particle(Periodic):
         self.custom_collision = None
         self.height = 0
         self.terrain_velocity = Vector3(0,0,0)
+        self.ignore_terrain = False
 
     def destroy(self):
         self.dead = True
@@ -105,9 +106,10 @@ class Particle(Periodic):
     def _collided(self, pos=None):
         if pos == None: pos = self.position
         self.collision_object = None
-        self._tp = Vector3.from_terrain(pos.x, pos.y, True)
-        if self._tp.z > pos.z+0.1:
-            return True
+        if not self.ignore_terrain:
+            self._tp = Vector3.from_terrain(pos.x, pos.y, True)
+            if self._tp.z > pos.z+0.1:
+                return True
         if len(Particle.collidables) > 0:
             for cobj in Particle.collidables:
                 if pos in cobj:
@@ -125,7 +127,9 @@ class Particle(Periodic):
             return self.collision_object.normal(pos)
         if pos == self.position and self._cn != None:
             return self._cn
-        return Vector3.terrain_normal(pos.x, pos.y)
+        if not self.ignore_terrain:
+            return Vector3.terrain_normal(pos.x, pos.y)
+        return Vector3(0,0,1,True)
 
     def terrain_point(self,pos=None):
         tp = None
@@ -133,8 +137,13 @@ class Particle(Periodic):
             pos = self.position
             if self._tp != None:
                 tp = self._tp
+
         if tp == None:
-            tp = Vector3.from_terrain(pos.x,pos.y, True)
+            if not self.ignore_terrain:
+                tp = Vector3.from_terrain(pos.x,pos.y, True)
+            else:
+                tp = Vector3(pos.x,pos.y,-2048,True)
+
         o = None
         if len(Particle.collidables) > 0:
             for cobj in Particle.collidables:
