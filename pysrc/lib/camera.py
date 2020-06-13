@@ -92,7 +92,8 @@ class Camera(Periodic):
             SetCameraField(field,value,Periodic.period)
     def pan_z(self,value,duration,method='smooth'):
         if method == 'instant' or duration <= Periodic.period:
-            self.transitions['z'].destroy()
+            if 'z' in self.transitions:
+                self.transitions['z'].destroy()
             self.pan_z_instant(value)
             return self
         if 'z' in self.transitions:
@@ -107,7 +108,8 @@ class Camera(Periodic):
         return self
     def pan_field(self,field,value,duration,method='smooth'):
         if method == 'instant' or duration <= Periodic.period:
-            self.transitions[field].destroy()
+            if field in self.transitions:
+                self.transitions[field].destroy()
             self.pan_field_instant(field,value)
             return self
         if field in self.transitions:
@@ -130,7 +132,8 @@ class Camera(Periodic):
         return self
     def pan_to(self,x,y,duration,method='smooth'):
         if method == 'instant' or duration <= Periodic.period:
-            self.transitions['xy'].destroy()
+            if 'xy' in self.transitions:
+                self.transitions['xy'].destroy()
             self.pan_to_instant(x,y)
             return self
         if 'xy' in self.transitions:
