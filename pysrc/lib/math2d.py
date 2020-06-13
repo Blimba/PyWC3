@@ -110,10 +110,14 @@ class Vector2:
         return other * self.dot(other)/other.dot(other)
 
     def rotate(self,theta,direction='cw'):
+        cos = None
+        sin = None
         if direction == 'cw':
-            cos, sin = math.cos(theta), math.sin(theta)
+            cos = math.cos(theta)
+            sin = math.sin(theta)
         else:
-            cos, sin = math.cos(-theta), math.sin(-theta)
+            cos = math.cos(-theta)
+            sin = math.sin(-theta)
         self.x = self.x*cos - self.y*sin
         self.y = self.x*sin + self.y*cos
 
