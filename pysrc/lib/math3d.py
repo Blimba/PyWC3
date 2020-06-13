@@ -26,9 +26,11 @@ class Vector3:
     def destroy(self):
         cls = type(self)
         if cls in Vector3._bin:
-            if self not in Vector3._bin[cls]:
+            if self not in Vector3._bin[cls] and len(Vector3._bin[cls]) < cls._fifo_buffer_size:
                 cls.active.remove(self)
                 Vector3._bin[cls].append(self)
+            elif self in cls.active:
+                cls.active.remove(self)
         else:
             Vector3._bin[cls] = [self]
     def fixnan(self):
@@ -165,9 +167,7 @@ class Vector3:
     @staticmethod
     def from_terrain(x,y,temp=False):
         MoveLocation(Vector3._loc,x,y)
-        z = 0.0
-        if IsTerrainPathable(x,y,PATHING_TYPE_WALKABILITY): z = 200.0
-        return Vector3(x,y,GetLocationZ(Vector3._loc) +z,temp)
+        return Vector3(x,y,GetLocationZ(Vector3._loc),temp)
 
     @staticmethod
     def terrain_normal(x,y,sampling=8):
@@ -326,6 +326,7 @@ class Box:
     def from_rect(r,minz,maxz):
         return Box(GetRectMinX(r), GetRectMinY(r), minz, GetRectMaxX(r), GetRectMaxY(r), maxz)
 
+
     def closest_point(self,p):
         if p in self:
             return Vector3(p.x,p.y,p.z,True)
@@ -387,3 +388,13 @@ class Box:
 
     def normal(self,p):
         return self.closest_point(p).subtract(p).normalize()
+
+    def show(self):
+        Vector3(self.minx, self.miny, self.minz, True).show()
+        Vector3(self.maxx, self.miny, self.minz, True).show()
+        Vector3(self.minx, self.maxy, self.minz, True).show()
+        Vector3(self.maxx, self.maxy, self.minz, True).show()
+        Vector3(self.minx, self.miny, self.maxz, True).show()
+        Vector3(self.maxx, self.miny, self.maxz, True).show()
+        Vector3(self.minx, self.maxy, self.maxz, True).show()
+        Vector3(self.maxx, self.maxy, self.maxz, True).show()
