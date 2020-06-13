@@ -14,7 +14,7 @@ class Scene(CTimer):
 
     def resume(self):
         if self.t != None and self.t.get_remaining() > 0:
-            print('resume scene',self.t.get_remaining(),self.t.get_elapsed())
+            # print('resume scene',self.t.get_remaining(),self.t.get_elapsed())
             ITimer.recycle.append(self.t)
             self.t = self.timer(self.t.get_remaining(),self.resume)
         else:
@@ -61,10 +61,10 @@ class Scene(CTimer):
             EnableOcclusion(True)
 
     def fade_out(self,duration):
-        self.fade(duration,[0,0,0,255],[0,0,0,0])
+        self.fade(duration,[0,0,0,0],[0,0,0,255])
 
     def fade_in(self,duration):
-        self.fade(duration,[0,0,0,0],[0,0,0,255])
+        self.fade(duration,[0,0,0,255],[0,0,0,0])
 
     def fade(self,duration,rgba1,rgba2,bmode = None,tex = None):
         if bmode == None:
