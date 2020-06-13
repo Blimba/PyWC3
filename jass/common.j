@@ -4067,6 +4067,8 @@ native BlzFrameGetHeight                           takes framehandle frame retur
 native BlzFrameGetWidth                            takes framehandle frame returns real
 native BlzFrameSetFont                             takes framehandle frame, string fileName, real height, integer flags returns nothing
 native BlzFrameSetTextAlignment                    takes framehandle frame, textaligntype vert, textaligntype horz returns nothing
+native BlzFrameGetChildrenCount                    takes framehandle frame returns integer
+native BlzFrameGetChild                            takes framehandle frame, integer index returns framehandle
 native BlzTriggerRegisterFrameEvent                takes trigger whichTrigger, framehandle frame, frameeventtype eventId returns event
 native BlzGetTriggerFrame                          takes nothing returns framehandle
 native BlzGetTriggerFrameEvent                     takes nothing returns frameeventtype
