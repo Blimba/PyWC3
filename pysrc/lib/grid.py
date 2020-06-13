@@ -120,5 +120,5 @@ class Grid2:
                 for d in self.data[i[0]]:
                     lst.append(d[i[1]])
                 return lst
-        return []
+        return None
 
