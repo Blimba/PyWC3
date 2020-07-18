@@ -13,7 +13,7 @@ class ClickPlane(Rectangle, Cyclist):
     ignore_next = False
     _loc = None
     def __gc__(self):
-        print("collecting clickplane")
+        pass#print("collecting clickplane")
     def __init__(self, minx, miny, maxx, maxy, z):
         Rectangle.__init__(self, minx, miny, maxx, maxy)
         Cyclist.__init__(self)
@@ -135,10 +135,12 @@ class ClickPlane(Rectangle, Cyclist):
             if Handle.get(e.ordered_unit):
                 u = Unit.get(e.ordered_unit)
                 if len(u.order_list) > 1:
+                    MouseEvent.suspend_events()
                     if u.was_idle():
                         u.order("stop")  # unit was idle, he shouldnt go off in a weird direction
                     else:
                         u.repeat_order(-2)  # to prevent the units going to strange locations for a moment, reorder its last 'real' order
+                    MouseEvent.resume_events()
 
 
     @staticmethod
