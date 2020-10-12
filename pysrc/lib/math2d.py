@@ -38,7 +38,12 @@ class Vector2:
         self.y = y
         if temp:
             self.destroy()
-
+    @staticmethod
+    def stats():
+        c = 0
+        for cls in Vector2._bin:
+            c += len(Vector2._bin[cls])
+        return 'Vector2 In use: {}, Recycle bin: {}'.format(str(len(Vector2.active)), str(c))
     def distance(p1,p2):
         dx = p1.x-p2.x
         dy = p1.y-p2.y
