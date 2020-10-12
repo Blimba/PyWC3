@@ -2,6 +2,8 @@
 import struct
 import json
 import os
+import csv
+
 
 
 class DataFile:
@@ -125,11 +127,37 @@ class ObjFile(DataFile):
         'destructable': 'war3map.w3b',
         'buff': 'war3map.w3h',
     }
+    metadata_files = {
+        'ability': 'abilitymetadata.csv',
+        'item': 'unitmetadata.csv',  # items and units share metadata file
+        'unit': 'unitmetadata.csv',
+        'buff': 'abilitybuffmetadata.csv',
+        'destructable': 'destructablemetadata.csv',
+        'upgrade': 'upgrademetadata.csv',
+        'doodad': 'doodadmetadata.csv',
+    }
 
     def __init__(self, format):
         try: super().__init__(ObjFile.formats[ObjFile.files[format].split('.')[-1]],ObjFile.files[format])
         except KeyError: raise SystemError("ObjFile {} unknown!".format(format))
         self.data['version'] = b"\x02\x00\x00\x00"
+
+        # get metadata, needed for variable types
+        self.metadata = {}
+        try:
+            with open(os.path.join("PyWC3\PyWC3", self.metadata_files[format])) as csvfile:
+                spamreader = csv.reader(csvfile)
+                fields = []
+                for row in spamreader:
+                    if len(fields) < 1:
+                        for field in row:
+                            fields.append(field)
+                    else:
+                        self.metadata[row[0]] = {}
+                        for field,data in zip(fields[1:],row[1:]):
+                            self.metadata[row[0]][field] = data
+        except:
+            print('Warning: no {} metadata file found, might cause bugs with variable types.'.format(format))
 
     def remove_obj(self,id):
         for obj in self.data['edited']:
@@ -187,7 +215,7 @@ class ObjFile(DataFile):
         for obj in self.data['custom']:
             if obj['new_id'] == obj_id:
                 for mod in obj['mods']:
-                    if mod['id'] == mod_id:
+                    if mod['id'] == mod_id and (level > 0 and mod['level'] == level):
                         mod['value'] = value
                         return True
                 nmod = {
@@ -198,7 +226,12 @@ class ObjFile(DataFile):
                     'terminate': b'\x00\x00\x00\x00'
                 }
                 if isinstance(value, int) or isinstance(value, bytes): nmod['var_type'] = 0
-                if isinstance(value, float): nmod['var_type'] = 2
+                if isinstance(value, float):
+                    try: vartype = self.metadata[mod_id.decode('ascii')]['type']
+                    except:
+                        print('Could not find variable type for {}, assuming "unreal"'.format(mod_id.decode('ascii')))
+                        vartype = 'unreal'
+                    nmod['var_type'] = 2 if vartype == 'unreal' else 1
                 if isinstance(value, str): nmod['var_type'] = 3
                 obj['mods'].append(nmod)
                 obj['num_mods'] += 1
@@ -218,7 +251,12 @@ class ObjFile(DataFile):
                     'terminate': mod_id,
                 }
                 if isinstance(value, int) or isinstance(value, bytes): nmod['var_type'] = 0
-                if isinstance(value, float): nmod['var_type'] = 2
+                if isinstance(value, float):
+                    try: vartype = self.metadata[mod_id.decode('ascii')]['type']
+                    except:
+                        print('Could not find variable type for {}, assuming "unreal"'.format(mod_id.decode('ascii')))
+                        vartype = 'unreal'
+                    nmod['var_type'] = 2 if vartype == 'unreal' else 1
                 if isinstance(value, str): nmod['var_type'] = 3
                 obj['mods'].append(nmod)
                 obj['num_mods'] += 1

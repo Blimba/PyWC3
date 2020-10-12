@@ -108,12 +108,17 @@ class Map:
                     level = 0
                     pointer = 0
                     if isinstance(value,list):
-                        for ivalue in value:
+                        for i,ivalue in enumerate(value):
+                            level = i+1
+                            pointer = 0
+                            value = ivalue
+                            if id[:-1] == old_id[1:]:
+                                pointer = int(id.decode('ascii')[-1])
                             if isinstance(ivalue, dict):
                                 level = ivalue['level']
                                 pointer = ivalue['pointer']
                                 value = ivalue['value']
-                            self.objfiles[file].add_mod(new_id, id, ivalue, level, pointer, from_id=old_id)
+                            self.objfiles[file].add_mod(new_id, id, value, level, pointer, from_id=old_id)
                     if isinstance(value,dict):
                         level = value['level']
                         pointer = value['pointer']
