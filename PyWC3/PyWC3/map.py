@@ -281,6 +281,7 @@ class Map:
             # write python required libraries
             if not os.path.exists(os.path.join(self.cfg['PYTHON_SOURCE_FOLDER'], "{}.py".format(filename))):
                 self.generate_python_source()
+            print("> Creating dependencies tree")
             for file in self.import_tree_to_list(self.get_dependencies(os.path.join(self.cfg['PYTHON_SOURCE_FOLDER'], "{}.py".format(filename)))):
                 f.write("-- Imported module {}\n".format(file))
                 f.write(self.translate_file(file))
