@@ -105,6 +105,8 @@ class WaypointUnit(Unit,Cyclist):
         self.active = True
         if WaypointUnit._start == None:
             WaypointUnit._start = self
+        else:
+            WaypointUnit._start.next = self
 
     def share_waypoints(self,wpu):
         self.waypoint = wpu.waypoint
