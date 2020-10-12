@@ -26,7 +26,7 @@ class Vector3:
     def destroy(self):
         cls = type(self)
         if cls in Vector3._bin:
-            if self not in Vector3._bin[cls] and len(Vector3._bin[cls]) < cls._fifo_buffer_size:
+            if self not in Vector3._bin[cls]:
                 cls.active.remove(self)
                 Vector3._bin[cls].append(self)
             elif self in cls.active:
