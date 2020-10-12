@@ -178,9 +178,9 @@ class Unit(Handle):
         self._scale = 1.0
         self._timescale = 1.0
     def destroy(self,hard=False):
-        Handle.destroy(self)
         if hard:
             RemoveUnit(self._handle)
+        Handle.destroy(self)
 
     @staticmethod
     def get(handle):
@@ -505,6 +505,12 @@ class Unit(Handle):
     def z(self, z):
         MoveLocation(Unit._loc, GetUnitX(self._handle), GetUnitY(self._handle))
         SetUnitFlyHeight(self._handle, z-GetLocationZ(Unit._loc), 0.0)  # test if 0 works
+
+    def damage(self,damage,target=None,attack_type = ATTACK_TYPE_NORMAL, damage_type = DAMAGE_TYPE_NORMAL, weapon_type = WEAPON_TYPE_WHOKNOWS):
+        if target != None:
+            UnitDamageTarget(self._handle, target._handle, damage, True, False, attack_type, damage_type, weapon_type)
+        else:
+            UnitDamageTarget(self._handle, self._handle, damage, True, False, attack_type, damage_type, weapon_type)
 
     def set_position(self,x,y,z=None):
         SetUnitX(self._handle,x)
